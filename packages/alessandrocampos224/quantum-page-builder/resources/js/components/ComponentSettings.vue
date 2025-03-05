@@ -1,17 +1,16 @@
-<!-- ComponentSettings.vue -->
 <template>
-  <div class="space-y-6">
+  <div class="space-y-2">
     <!-- Configurações comuns para todos os componentes -->
     <template v-for="type in ['header', 'content', 'benefits', 'simulator', 'contact-channels', 'cards', 'form']" :key="type">
       <template v-if="component?.type === type">
         <!-- Sistema de Colunas -->
-        <div class="space-y-4">
+        <div class="space-y-2">
           <h4 class="text-sm font-medium">Sistema de Colunas</h4>
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div>
               <Label class="mb-1">Largura em Colunas</Label>
               <Select v-model="settings.columnSpan">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                   <SelectValue placeholder="Selecione o número de colunas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -23,43 +22,47 @@
         </div>
 
         <!-- Aninhamento de Componentes -->
-        <div class="space-y-4">
+        <div class="space-y-2">
           <h4 class="text-sm font-medium">Aninhamento de Componentes</h4>
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div class="flex items-center space-x-2">
-              <Checkbox id="allowNesting" v-model="settings.allowNesting" />
-              <Label for="allowNesting">Permitir componentes aninhados</Label>
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="settings.allowNesting"
+                @click="toggleNesting"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+                :class="[
+                  settings.allowNesting ? 'bg-primary-600' : 'bg-gray-200',
+                ]"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                  :class="[
+                    settings.allowNesting ? 'translate-x-6' : 'translate-x-1',
+                  ]"
+                />
+              </button>
+              <Label>Permitir componentes aninhados</Label>
             </div>
           </div>
         </div>
 
         <!-- Container -->
-        <div class="space-y-4">
+        <div class="space-y-2">
           <h4 class="text-sm font-medium">Container</h4>
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div>
               <Label class="mb-1">Largura</Label>
               <Select v-model="settings.containerWidth">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                   <SelectValue placeholder="Selecione a largura" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Padrão</SelectItem>
                   <SelectItem value="full">Largura Total</SelectItem>
+                  <SelectItem value="contained">Contido</SelectItem>
                   <SelectItem value="narrow">Estreito</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label class="mb-1">Alinhamento do Texto</Label>
-              <Select v-model="settings.textAlignment">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o alinhamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Esquerda</SelectItem>
-                  <SelectItem value="center">Centro</SelectItem>
-                  <SelectItem value="right">Direita</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -382,19 +385,13 @@
 
         <!-- Configurações específicas para cards -->
         <template v-if="type === 'cards'">
-          <div class="space-y-4">
+          <div class="space-y-2">
             <h4 class="text-sm font-medium">Cards</h4>
-            <div class="space-y-3">
+            <div class="space-y-2">
               <!-- Título da seção -->
               <div v-if="settings.dataSource !== 'dynamic' || !settings.contentLink?.data">
                 <Label class="mb-1">Título da Seção</Label>
                 <Input v-model="settings.title" placeholder="Digite o título da seção" />
-              </div>
-              <div v-else>
-                <Label class="mb-1">Título da Seção (Dinâmico)</Label>
-                <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 text-sm">
-                  {{ settings.contentLink.data.name }}
-                </div>
               </div>
               
               <!-- Subtítulo da seção -->
@@ -402,100 +399,66 @@
                 <Label class="mb-1">Subtítulo da Seção</Label>
                 <Input v-model="settings.subtitle" placeholder="Digite o subtítulo da seção" />
               </div>
-              <div v-else>
-                <Label class="mb-1">Subtítulo da Seção (Dinâmico)</Label>
-                <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 text-sm">
-                  {{ settings.contentLink.data.description || 'Sem descrição' }}
-                </div>
-              </div>
               
               <!-- Configurações de layout -->
               <div>
-                <Label class="mb-1">Número de Colunas</Label>
-                <Select v-model="settings.columns">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o número de colunas" />
+                <Label class="mb-1">Layout dos Cards</Label>
+                <Select v-model="settings.layout">
+                  <SelectTrigger class="w-full">
+                    <SelectValue placeholder="Selecione o layout" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 Coluna</SelectItem>
-                    <SelectItem value="2">2 Colunas</SelectItem>
-                    <SelectItem value="3">3 Colunas</SelectItem>
-                    <SelectItem value="4">4 Colunas</SelectItem>
+                    <SelectItem value="grid">Grid</SelectItem>
+                    <SelectItem value="list">Lista</SelectItem>
+                    <SelectItem value="masonry">Masonry</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
-              <!-- Cards estáticos (apenas se não for dinâmico) -->
-              <div v-if="settings.dataSource !== 'dynamic' || !settings.contentLink?.data">
-                <Label class="mb-1">Cards</Label>
-                <div v-for="(card, index) in settings.cards" :key="index" class="mb-4 p-3 border border-gray-200 dark:border-gray-700 rounded-md">
-                  <div class="flex justify-between items-center mb-2">
-                    <h5 class="text-sm font-medium">Card {{ index + 1 }}</h5>
-                    <button @click="removeCard(index)" class="text-red-500 hover:text-red-700">
-                      <Trash class="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div class="space-y-2">
-                    <div>
-                      <Label class="mb-1">Título</Label>
-                      <Input v-model="card.title" placeholder="Título do card" />
-                    </div>
-                    <div>
-                      <Label class="mb-1">Descrição</Label>
-                      <Textarea v-model="card.description" placeholder="Descrição do card" rows="2" />
-                    </div>
-                    <div>
-                      <Label class="mb-1">Ícone</Label>
-                      <Select v-model="card.icon">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um ícone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="document">Documento</SelectItem>
-                          <SelectItem value="calendar">Calendário</SelectItem>
-                          <SelectItem value="users">Usuários</SelectItem>
-                          <SelectItem value="chart">Gráfico</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label class="mb-1">Link</Label>
-                      <div class="grid grid-cols-2 gap-2">
-                        <Input v-model="card.link.text" placeholder="Texto do link" />
-                        <Input v-model="card.link.url" placeholder="URL" />
-                      </div>
-                    </div>
-                  </div>
+
+              <!-- Configurações específicas para Grid -->
+              <div v-if="settings.layout === 'grid'" class="space-y-2">
+                <div>
+                  <Label class="mb-1">Número de Colunas</Label>
+                  <Select v-model="settings.columns">
+                    <SelectTrigger class="w-full">
+                      <SelectValue placeholder="Selecione o número de colunas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem :value="1">1 Coluna</SelectItem>
+                      <SelectItem :value="2">2 Colunas</SelectItem>
+                      <SelectItem :value="3">3 Colunas</SelectItem>
+                      <SelectItem :value="4">4 Colunas</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <button @click="addCard" class="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 mt-2">
-                  <div class="flex items-center justify-center">
-                    <Plus class="h-4 w-4 mr-2" />
-                    <span>Adicionar Card</span>
-                  </div>
-                </button>
-              </div>
-              
-              <!-- Mensagem para cards dinâmicos -->
-              <div v-else-if="settings.contentLink?.type === 'category'" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                  Os cards serão gerados automaticamente a partir dos posts da categoria selecionada.
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                  Categoria: {{ settings.contentLink.data.name }} ({{ settings.contentLink.data.posts_count }} posts)
-                </p>
+
+                <!-- Espaçamento entre cards -->
+                <div>
+                  <Label class="mb-1">Espaçamento</Label>
+                  <Select v-model="settings.spacing">
+                    <SelectTrigger class="w-full">
+                      <SelectValue placeholder="Selecione o espaçamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="compact">Compacto</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="relaxed">Relaxado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
         </template>
 
         <!-- Background -->
-        <div class="space-y-4">
+        <div class="space-y-2">
           <h4 class="text-sm font-medium">Background</h4>
-          <div class="space-y-3">
+          <div class="space-y-2">
             <div>
               <Label class="mb-1">Cor de Fundo</Label>
               <Select v-model="settings.backgroundColor">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                   <SelectValue placeholder="Selecione a cor de fundo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -507,131 +470,26 @@
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label class="mb-1">Imagem de Fundo</Label>
-              <div class="flex gap-2">
-                <Input v-model="settings.backgroundImage" placeholder="URL da imagem" />
-                <Button variant="outline" @click="openMediaLibrary">Escolher</Button>
-              </div>
-            </div>
-            <div v-if="settings.backgroundImage">
-              <Label class="mb-1">Opacidade do Overlay</Label>
-              <Slider v-model="settings.overlayOpacity" :min="0" :max="1" :step="0.1" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Bordas e Sombras -->
-        <div class="space-y-4">
-          <h4 class="text-sm font-medium">Bordas e Sombras</h4>
-          <div class="space-y-3">
-            <div>
-              <Label class="mb-1">Sombra</Label>
-              <Select v-model="settings.shadow">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a sombra" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhuma</SelectItem>
-                  <SelectItem value="sm">Pequena</SelectItem>
-                  <SelectItem value="md">Média</SelectItem>
-                  <SelectItem value="lg">Grande</SelectItem>
-                  <SelectItem value="xl">Extra Grande</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label class="mb-1">Estilo da Borda</Label>
-              <Select v-model="settings.borderStyle">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o estilo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhuma</SelectItem>
-                  <SelectItem value="solid">Sólida</SelectItem>
-                  <SelectItem value="dashed">Tracejada</SelectItem>
-                  <SelectItem value="dotted">Pontilhada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div v-if="settings.borderStyle !== 'none'">
-              <Label class="mb-1">Espessura da Borda</Label>
-              <Select v-model="settings.borderWidth">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a espessura" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1px</SelectItem>
-                  <SelectItem value="2">2px</SelectItem>
-                  <SelectItem value="4">4px</SelectItem>
-                  <SelectItem value="8">8px</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div v-if="settings.borderStyle !== 'none'">
-              <Label class="mb-1">Cor da Borda</Label>
-              <Select v-model="settings.borderColor">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gray-200">Cinza Claro</SelectItem>
-                  <SelectItem value="gray-300">Cinza</SelectItem>
-                  <SelectItem value="tenant-primary">Cor Principal</SelectItem>
-                  <SelectItem value="tenant-secondary">Cor Secundária</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label class="mb-1">Arredondamento</Label>
-              <Select v-model="settings.borderRadius">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o arredondamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  <SelectItem value="sm">Pequeno</SelectItem>
-                  <SelectItem value="md">Médio</SelectItem>
-                  <SelectItem value="lg">Grande</SelectItem>
-                  <SelectItem value="full">Total</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
 
         <!-- Espaçamento -->
-        <div class="space-y-4">
+        <div class="space-y-2">
           <h4 class="text-sm font-medium">Espaçamento</h4>
-          <div class="space-y-3">
-            <!-- Espaçamento entre componentes -->
-            <div>
-              <Label class="mb-1">Espaçamento entre Componentes</Label>
-              <Select v-model="settings.spacing">
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o espaçamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="compact">Compacto</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="relaxed">Relaxado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div class="space-y-2">
             <!-- Padding Vertical -->
             <div>
               <Label class="mb-1">Padding Vertical</Label>
               <Select v-model="settings.paddingY">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                   <SelectValue placeholder="Selecione o padding vertical" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="2">Muito Pequeno (py-2)</SelectItem>
                   <SelectItem value="4">Pequeno (py-4)</SelectItem>
-                  <SelectItem value="8">Médio (py-8)</SelectItem>
-                  <SelectItem value="12">Normal (py-12)</SelectItem>
-                  <SelectItem value="16">Grande (py-16)</SelectItem>
-                  <SelectItem value="20">Extra Grande (py-20)</SelectItem>
+                  <SelectItem value="6">Médio (py-6)</SelectItem>
+                  <SelectItem value="8">Normal (py-8)</SelectItem>
+                  <SelectItem value="12">Grande (py-12)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -640,15 +498,15 @@
             <div>
               <Label class="mb-1">Padding Horizontal</Label>
               <Select v-model="settings.paddingX">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                   <SelectValue placeholder="Selecione o padding horizontal" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="2">Muito Pequeno (px-2)</SelectItem>
                   <SelectItem value="4">Pequeno (px-4)</SelectItem>
-                  <SelectItem value="8">Médio (px-8)</SelectItem>
-                  <SelectItem value="12">Normal (px-12)</SelectItem>
-                  <SelectItem value="16">Grande (px-16)</SelectItem>
-                  <SelectItem value="20">Extra Grande (px-20)</SelectItem>
+                  <SelectItem value="6">Médio (px-6)</SelectItem>
+                  <SelectItem value="8">Normal (px-8)</SelectItem>
+                  <SelectItem value="12">Grande (px-12)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -917,167 +775,6 @@
                     <SelectItem value="4">4 Colunas</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <template v-if="type === 'cards'">
-          <!-- Título e Subtítulo -->
-          <div class="space-y-4">
-            <h4 class="text-sm font-medium">Título</h4>
-            <div class="space-y-3">
-              <div>
-                <Label class="mb-1">Texto</Label>
-                <Input v-model="settings.title" placeholder="Digite o título" />
-              </div>
-              <div>
-                <Label class="mb-1">Tamanho</Label>
-                <Select v-model="settings.titleSize">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tamanho" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="xl">Pequeno</SelectItem>
-                    <SelectItem value="2xl">Médio</SelectItem>
-                    <SelectItem value="3xl">Grande</SelectItem>
-                    <SelectItem value="5xl">Extra Grande</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label class="mb-1">Peso</Label>
-                <Select v-model="settings.titleWeight">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o peso" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="medium">Médio</SelectItem>
-                    <SelectItem value="semibold">Semi-negrito</SelectItem>
-                    <SelectItem value="bold">Negrito</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label class="mb-1">Cor</Label>
-                <Select v-model="settings.titleColor">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a cor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gray-900">Preto</SelectItem>
-                    <SelectItem value="gray-700">Cinza Escuro</SelectItem>
-                    <SelectItem value="tenant-primary">Cor Principal</SelectItem>
-                    <SelectItem value="white">Branco</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div class="space-y-4">
-            <h4 class="text-sm font-medium">Subtítulo</h4>
-            <div class="space-y-3">
-              <div>
-                <Label class="mb-1">Texto</Label>
-                <Input v-model="settings.subtitle" placeholder="Digite o subtítulo" />
-              </div>
-              <div>
-                <Label class="mb-1">Tamanho</Label>
-                <Select v-model="settings.subtitleSize">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tamanho" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="base">Pequeno</SelectItem>
-                    <SelectItem value="lg">Médio</SelectItem>
-                    <SelectItem value="xl">Grande</SelectItem>
-                    <SelectItem value="2xl">Extra Grande</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label class="mb-1">Peso</Label>
-                <Select v-model="settings.subtitleWeight">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o peso" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="medium">Médio</SelectItem>
-                    <SelectItem value="semibold">Semi-negrito</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label class="mb-1">Cor</Label>
-                <Select v-model="settings.subtitleColor">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a cor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gray-600">Cinza</SelectItem>
-                    <SelectItem value="gray-500">Cinza Claro</SelectItem>
-                    <SelectItem value="tenant-primary">Cor Principal</SelectItem>
-                    <SelectItem value="white">Branco</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Cards -->
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h4 class="text-sm font-medium">Cards</h4>
-              <button type="button" @click="addCard" class="text-sm text-tenant-primary hover:text-tenant-primary-dark">
-                Adicionar Card
-              </button>
-            </div>
-            <div v-if="settings?.cards?.length > 0" class="space-y-4">
-              <div v-for="(card, index) in settings.cards" :key="index" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div class="flex justify-between items-start mb-3">
-                  <h5 class="text-sm font-medium">Card {{ index + 1 }}</h5>
-                  <button type="button" @click="removeCard(index)" class="text-red-500 hover:text-red-600">
-                    <Trash class="w-4 h-4" />
-                  </button>
-                </div>
-                <div class="space-y-3">
-                  <div>
-                    <Label class="mb-1">Título</Label>
-                    <Input v-model="card.title" placeholder="Digite o título" />
-                  </div>
-                  <div>
-                    <Label class="mb-1">Descrição</Label>
-                    <Textarea v-model="card.description" rows="2" />
-                  </div>
-                  <div>
-                    <Label class="mb-1">Ícone</Label>
-                    <Select v-model="card.icon">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o ícone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="document">Documento</SelectItem>
-                        <SelectItem value="users">Usuários</SelectItem>
-                        <SelectItem value="calendar">Calendário</SelectItem>
-                        <SelectItem value="phone">Telefone</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="location">Localização</SelectItem>
-                        <SelectItem value="Clock">Relógio</SelectItem>
-                        <SelectItem value="chat">Chat</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label class="mb-1">Link</Label>
-                    <div class="space-y-2">
-                      <Input v-model="card.link.text" placeholder="Texto do link" />
-                      <Input v-model="card.link.url" placeholder="URL" />
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -1379,6 +1076,10 @@ onMounted(async () => {
   // Mesclar as configurações existentes com as novas
   Object.assign(settings, props.component?.props || {})
   
+  // Garantir que allowNesting seja sempre um booleano
+  settings.allowNesting = settings.allowNesting === true
+  console.log('ComponentSettings - allowNesting inicializado como:', settings.allowNesting)
+  
   // Garantir que selectedCategories seja sempre um array
   if (!Array.isArray(settings.selectedCategories)) {
     console.log('ComponentSettings - selectedCategories não é um array, inicializando:', settings.selectedCategories)
@@ -1544,65 +1245,44 @@ const openMediaLibrary = () => {
 watch(settings, (newSettings) => {
   console.log('ComponentSettings - Settings atualizados:', {
     ...newSettings,
-    style: newSettings.style // Log específico do estilo
+    allowNesting: newSettings.allowNesting === true,
   })
-  console.log('ComponentSettings - Tipo do componente:', props.component?.type)
-  console.log('ComponentSettings - ID do componente:', props.component?.id)
-  emit('update', props.component.id, newSettings)
+  
+  // Garantir que allowNesting seja incluído e convertido para booleano
+  const updatedSettings = {
+    ...newSettings,
+    allowNesting: newSettings.allowNesting === true
+  }
+  
+  // Emitir o evento com o ID do componente e as configurações atualizadas
+  emit('update', props.component.id, updatedSettings)
 }, { deep: true })
 
 // Watch para atualizar quando o componente mudar
 watch(() => props.component, (newComponent) => {
   if (newComponent) {
-    console.log('ComponentSettings - Novo componente:', {
-      type: newComponent.type,
-      id: newComponent.id,
-      props: newComponent.props
-    })
+    console.log('ComponentSettings - Novo componente recebido:', newComponent)
+    // Manter o estado atual do allowNesting ao mesclar as configurações
+    const currentAllowNesting = settings.allowNesting
     Object.assign(settings, {
       ...initializeSettings(),
-      ...(newComponent.props || {})
+      ...(newComponent.props || {}),
+      allowNesting: newComponent.props?.allowNesting === true
     })
+    console.log('ComponentSettings - Settings após atualização com allowNesting:', settings.allowNesting)
   }
 }, { deep: true })
 
-// Inicializar as configurações quando o componente é montado
-if (props.component) {
-  Object.assign(settings, {
-    ...initializeSettings(),
-    ...(props.component.props || {})
-  })
+// Função para alternar o estado de aninhamento
+const toggleNesting = () => {
+  console.log('Toggle nesting - Estado anterior:', settings.allowNesting)
+  settings.allowNesting = settings.allowNesting !== true
+  console.log('Toggle nesting - Novo estado:', settings.allowNesting)
   
-  // Garantir que selectedCategories seja sempre um array
-  if (!Array.isArray(settings.selectedCategories)) {
-    console.log('ComponentSettings - selectedCategories não é um array, inicializando:', settings.selectedCategories)
-    settings.selectedCategories = []
-  } else {
-    console.log('ComponentSettings - selectedCategories inicializado como:', settings.selectedCategories)
-  }
+  // Emitir atualização imediatamente após a mudança
+  emit('update', props.component.id, {
+    ...settings,
+    allowNesting: settings.allowNesting === true
+  })
 }
-
-const loadAvailablePosts = async () => {
-  isLoadingPosts.value = true
-  try {
-    const url = settings.filterCategory !== 'all'
-      ? `/api/page-builder/categories/${settings.filterCategory}/posts`
-      : '/api/page-builder/posts'
-      
-    const response = await axios.get(url)
-    if (response.data.success) {
-      availablePosts.value = response.data.data
-    }
-  } catch (error) {
-    console.error('Erro ao carregar posts:', error)
-  } finally {
-    isLoadingPosts.value = false
-  }
-}
-
-watch(() => settings.filterCategory, () => {
-  if (settings.contentType === 'posts') {
-    loadAvailablePosts()
-  }
-})
-</script> 
+</script>
