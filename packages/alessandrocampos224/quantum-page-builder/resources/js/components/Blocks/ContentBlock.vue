@@ -107,7 +107,7 @@
     </div>
 
     <!-- Área para componentes aninhados -->
-    <div v-if="props.allowNesting" class="nested-components-container mt-12 border-t border-gray-200 dark:border-gray-700 pt-8 grid grid-cols-12 gap-6">
+    <div v-if="props.allowNesting" class="nested-components-container">
       <slot></slot>
     </div>
   </div>

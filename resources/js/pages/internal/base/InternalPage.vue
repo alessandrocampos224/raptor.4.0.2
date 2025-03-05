@@ -174,7 +174,11 @@ onMounted(() => {
 }
 
 :deep(.nested-components-container) {
-  @apply grid grid-cols-12 gap-4;
+  @apply grid grid-cols-12 gap-8 mt-16 pt-12 border-t-2 border-gray-200 dark:border-gray-700;
+}
+
+:deep(.nested-components) {
+  @apply mt-8 grid grid-cols-12 gap-8;
 }
 </style>
 

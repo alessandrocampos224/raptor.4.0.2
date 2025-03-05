@@ -99,7 +99,7 @@
       </div>
 
       <!-- Área para componentes aninhados -->
-      <div v-if="allowNesting" class="nested-components-container mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+      <div v-if="allowNesting" class="nested-components-container">
         <slot></slot>
       </div>
     </div>
