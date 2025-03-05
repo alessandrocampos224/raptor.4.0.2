@@ -3,6 +3,7 @@
   <div 
     :class="[
       'form-block relative',
+      `style-${typeof style === 'string' ? style : 'default'}`,
       `bg-${backgroundColor}`,
       `shadow-${shadow}`,
       `border-${borderStyle}`,
@@ -218,8 +219,8 @@ const props = defineProps({
     default: ''
   },
   overlayOpacity: {
-    type: String,
-    default: ''
+    type: [String, Number],
+    default: 0
   },
   textAlignment: {
     type: String,
@@ -257,6 +258,10 @@ const props = defineProps({
   postsLimit: {
     type: Number,
     default: 3
+  },
+  style: {
+    type: [String, Object],
+    default: 'default' // 'default', 'cards', 'minimal'
   }
 })
 

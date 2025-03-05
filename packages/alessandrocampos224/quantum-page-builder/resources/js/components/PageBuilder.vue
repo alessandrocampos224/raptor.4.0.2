@@ -1048,61 +1048,8 @@ const editComponent = (component, parentComp = null) => {
 }
 
 const closeDrawer = () => {
-  // Atualiza o componente original com as alterações antes de fechar
-  if (selectedComponent.value) {
-    console.log('PageBuilder - Fechando drawer, componente selecionado:', selectedComponent.value)
-    
-    // Garante que allowNesting seja um booleano
-    const updatedComponent = ensureAllowNestingIsBoolean(selectedComponent.value);
-    
-    // Cria uma cópia profunda dos componentes para evitar mutações diretas
-    const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value));
-    
-    // Encontra o componente no array principal
-    const index = updatedComponents.findIndex(c => c.id === updatedComponent.id);
-    if (index !== -1) {
-      console.log('PageBuilder - Atualizando componente antes de fechar:', updatedComponent);
-      
-      // Atualiza o componente no array
-      updatedComponents[index] = updatedComponent;
-      
-      // Atualiza o estado e emite a atualização
-      pageComponents.value = updatedComponents;
-      
-      // Força a emissão da atualização
-      nextTick(() => {
-        emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
-      });
-    } else if (parentComponent.value) {
-      // Verifica se é um componente aninhado
-      const parentIndex = updatedComponents.findIndex(c => c.id === parentComponent.value.id);
-      if (parentIndex !== -1) {
-        // Garante que o componente pai tenha um array children
-        if (!updatedComponents[parentIndex].children) {
-          updatedComponents[parentIndex].children = [];
-        }
-        
-        const childIndex = updatedComponents[parentIndex].children.findIndex(c => c.id === updatedComponent.id);
-        if (childIndex !== -1) {
-          console.log('PageBuilder - Atualizando componente aninhado antes de fechar:', updatedComponent);
-          
-          // Atualiza o componente aninhado no array
-          updatedComponents[parentIndex].children[childIndex] = updatedComponent;
-          
-          // Aplica a função ensureAllowNestingIsBoolean para garantir a consistência
-          updatedComponents[parentIndex] = ensureAllowNestingIsBoolean(updatedComponents[parentIndex]);
-          
-          // Atualiza o estado e emite a atualização
-          pageComponents.value = updatedComponents;
-          
-          // Força a emissão da atualização
-          nextTick(() => {
-            emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
-          });
-        }
-      }
-    }
-  }
+  // Não precisamos atualizar o componente aqui, pois isso já é feito pelo updateComponentSettings
+  // Apenas fechamos o drawer e limpamos as referências
   
   drawerOpen.value = false;
   selectedComponent.value = null;
@@ -1110,8 +1057,8 @@ const closeDrawer = () => {
   
   // Remove a classe overflow-hidden do body quando o Drawer é fechado
   nextTick(() => {
-    document.body.classList.remove('overflow-hidden');
-  });
+    document.body.classList.remove('overflow-hidden')
+  })
 }
 
 const removeComponent = (component) => {
@@ -1189,11 +1136,8 @@ const updateComponentSettings = (componentId, newSettings, parentComponentId = n
       
       const childIndex = updatedComponents[parentIndex].children.findIndex(c => c.id === componentId);
       if (childIndex !== -1) {
-        // Atualiza as props do componente filho
-        updatedComponents[parentIndex].children[childIndex].props = {
-          ...updatedComponents[parentIndex].children[childIndex].props,
-          ...updatedSettings
-        };
+        // Substitui completamente as props do componente filho
+        updatedComponents[parentIndex].children[childIndex].props = updatedSettings;
         
         // Aplica a função ensureAllowNestingIsBoolean para garantir a consistência
         updatedComponents[parentIndex] = ensureAllowNestingIsBoolean(updatedComponents[parentIndex]);
@@ -1206,11 +1150,8 @@ const updateComponentSettings = (componentId, newSettings, parentComponentId = n
     // Atualiza o componente principal
     const componentIndex = updatedComponents.findIndex(c => c.id === componentId);
     if (componentIndex !== -1) {
-      // Atualiza as props do componente
-      updatedComponents[componentIndex].props = {
-        ...updatedComponents[componentIndex].props,
-        ...updatedSettings
-      };
+      // Substitui completamente as props do componente
+      updatedComponents[componentIndex].props = updatedSettings;
       
       // Aplica a função ensureAllowNestingIsBoolean para garantir a consistência
       updatedComponents[componentIndex] = ensureAllowNestingIsBoolean(updatedComponents[componentIndex]);
@@ -1321,6 +1262,11 @@ const getDefaultProps = (type) => {
   const component = availableComponents.value.find(c => c.type === type)
   const defaultProps = component ? component.defaultProps : {}
   
+  // Garantir que style seja uma string se existir
+  if (defaultProps.style && typeof defaultProps.style !== 'string') {
+    defaultProps.style = 'default';
+  }
+  
   // Adicionar propriedades padrão para o sistema de colunas e aninhamento
   return {
     ...defaultProps,
@@ -1409,6 +1355,12 @@ const handleMainDragAdd = (event) => {
     // Garantir que allowNesting seja definido como booleano
     addedComponent.props.allowNesting = true;
     
+    // Garantir que style seja uma string se existir
+    if (addedComponent.props.style !== undefined && typeof addedComponent.props.style !== 'string') {
+      addedComponent.props.style = 'default';
+      console.log('Convertendo style de objeto para string para componente adicionado');
+    }
+    
     console.log('Componente após inicialização com allowNesting:', addedComponent.props.allowNesting);
     
     // Força a atualização do v-model para garantir que as mudanças sejam persistidas
@@ -1456,6 +1408,12 @@ const handleNestedDragAdd = (parentComponent, event) => {
       
       // Garante que allowNesting seja um booleano
       addedComponent.props.allowNesting = true;
+      
+      // Garantir que style seja uma string se existir
+      if (addedComponent.props.style !== undefined && typeof addedComponent.props.style !== 'string') {
+        addedComponent.props.style = 'default';
+        console.log('Convertendo style de objeto para string para componente aninhado');
+      }
       
       // Calcular posição com base no evento ou usar valores padrão
       const container = document.getElementById(`nest-container-${updatedParent.id}`);
@@ -1527,8 +1485,20 @@ const ensureAllowNestingIsBoolean = (component) => {
     componentCopy.props = {};
   }
   
-  // Garante que allowNesting seja um booleano
-  componentCopy.props.allowNesting = true;
+  // Garante que allowNesting seja um booleano, mas mantém o valor atual se já estiver definido
+  if (componentCopy.props.allowNesting === undefined) {
+    componentCopy.props.allowNesting = true;
+  } else {
+    componentCopy.props.allowNesting = componentCopy.props.allowNesting === true;
+  }
+  
+  // Garante que style seja sempre uma string
+  if (componentCopy.props.style !== undefined && typeof componentCopy.props.style !== 'string') {
+    // Se for um objeto, converte para string 'default'
+    componentCopy.props.style = 'default';
+    console.log(`Convertendo style de objeto para string para componente ${componentCopy.id}`);
+  }
+  
   console.log(`Garantindo que allowNesting seja booleano para componente ${componentCopy.id}:`, componentCopy.props.allowNesting);
   
   // Garante que children sempre seja um array
@@ -1750,6 +1720,10 @@ const handleDrop = (component, event) => {
       }
     }
     
+    // Verificar se o componente está sendo arrastado da barra lateral
+    // Isso é indicado pela ausência do componente no array principal e em qualquer componente aninhado
+    const isFromSidebar = existingIndex === -1 && !parentOfNested;
+    
     if (existingIndex !== -1) {
       // É um componente existente no array principal, vamos movê-lo
       console.log('Movendo componente existente do array principal:', draggedComponent.value);
@@ -1772,9 +1746,21 @@ const handleDrop = (component, event) => {
         pageComponents.value = updatedComponents;
       }
     } else {
-      // É um novo componente, vamos criar um clone
-      console.log('Criando novo componente:', draggedComponent.value);
+      // É um novo componente da barra lateral, vamos criar um clone
+      console.log('Criando novo componente da barra lateral:', draggedComponent.value);
       newComponent = cloneComponent(draggedComponent.value, true);
+      
+      // Se o componente foi arrastado da barra lateral, precisamos verificar se ele foi adicionado
+      // automaticamente ao array principal pelo draggable e removê-lo para evitar duplicação
+      if (isFromSidebar) {
+        // Procurar o componente recém-adicionado no array principal com o mesmo ID
+        const newComponentIndex = pageComponents.value.findIndex(c => c.id === newComponent.id);
+        if (newComponentIndex !== -1) {
+          console.log('Removendo componente duplicado do array principal:', newComponent.id);
+          shouldRemoveOriginal = true;
+          existingIndex = newComponentIndex;
+        }
+      }
     }
     
     // Adicionar posição ao componente

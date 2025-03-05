@@ -126,7 +126,7 @@ const props = defineProps({
   },
   style: {
     type: [String, Object],
-    default: () => ({}),
+    default: 'default' // 'default', 'cards', 'minimal'
   },
   layout: {
     type: String,

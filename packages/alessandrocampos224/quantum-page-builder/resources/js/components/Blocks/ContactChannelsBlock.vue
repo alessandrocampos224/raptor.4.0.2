@@ -210,7 +210,7 @@ const props = defineProps({
 
 // Debug do valor do estilo
 watch(() => props.style, (newValue) => {
-  const currentStyle = typeof newValue === 'object' ? newValue.value : newValue
+  const currentStyle = typeof newValue === 'string' ? newValue : 'default';
   console.log('ContactChannelsBlock - Estilo atualizado:', currentStyle)
 }, { immediate: true })
 
@@ -249,7 +249,7 @@ const getDetailIcon = (type) => {
 
 // Computed property para as classes do card
 const cardClasses = computed(() => {
-  const currentStyle = typeof props.style === 'object' ? props.style.value : props.style
+  const currentStyle = typeof props.style === 'string' ? props.style : 'default';
   
   return [
     'flex flex-col items-center text-center transition-all duration-300',
@@ -263,7 +263,7 @@ const cardClasses = computed(() => {
 
 // Computed property para as classes do ícone
 const iconClasses = computed(() => {
-  const currentStyle = typeof props.style === 'object' ? props.style.value : props.style
+  const currentStyle = typeof props.style === 'string' ? props.style : 'default';
   
   return [
     'mb-4 flex items-center justify-center rounded-full transition-all duration-300',
@@ -277,7 +277,7 @@ const iconClasses = computed(() => {
 
 // Computed property para as classes do título
 const titleClasses = computed(() => {
-  const currentStyle = typeof props.style === 'object' ? props.style.value : props.style
+  const currentStyle = typeof props.style === 'string' ? props.style : 'default';
   
   return {
     'font-semibold mb-2 text-gray-900 dark:text-white': true,
@@ -289,7 +289,7 @@ const titleClasses = computed(() => {
 
 // Computed property para as classes da descrição
 const descriptionClasses = computed(() => {
-  const currentStyle = typeof props.style === 'object' ? props.style.value : props.style
+  const currentStyle = typeof props.style === 'string' ? props.style : 'default';
   
   return {
     'text-gray-600 dark:text-gray-300': currentStyle === 'default',

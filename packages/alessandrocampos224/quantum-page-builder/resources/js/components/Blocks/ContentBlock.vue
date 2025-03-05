@@ -145,7 +145,7 @@ const props = defineProps({
   title: { type: String, default: '' },
   layout: { type: String, default: 'grid' },
   columns: { type: Number, default: 3 },
-  style: { type: String, default: 'default' },
+  style: { type: [String, Object], default: 'default' },
   theme: { type: String, default: 'light' }
 })
 

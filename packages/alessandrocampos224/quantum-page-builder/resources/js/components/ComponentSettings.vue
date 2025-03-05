@@ -1225,20 +1225,29 @@ const openMediaLibrary = () => {
 }
 
 // Watch para emitir atualizações
+let updateTimeout = null;
 watch(settings, (newSettings) => {
   console.log('ComponentSettings - Settings atualizados:', {
     ...newSettings,
     allowNesting: newSettings.allowNesting === true,
   });
   
-  // Garantir que allowNesting seja incluído e convertido para booleano
-  const updatedSettings = {
-    ...JSON.parse(JSON.stringify(newSettings)), // Cria uma cópia profunda para evitar mutações
-    allowNesting: newSettings.allowNesting === true
-  };
+  // Limpa o timeout anterior para evitar múltiplas atualizações
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
   
-  // Emitir o evento com o ID do componente e as configurações atualizadas
-  emit('update', props.component.id, updatedSettings);
+  // Usa um timeout para debounce das atualizações
+  updateTimeout = setTimeout(() => {
+    // Garantir que allowNesting seja incluído e convertido para booleano
+    const updatedSettings = {
+      ...JSON.parse(JSON.stringify(newSettings)), // Cria uma cópia profunda para evitar mutações
+      allowNesting: newSettings.allowNesting === true
+    };
+    
+    // Emitir o evento com o ID do componente e as configurações atualizadas
+    emit('update', props.component.id, updatedSettings);
+  }, 300); // 300ms de debounce
 }, { deep: true });
 
 // Watch para atualizar quando o componente mudar
@@ -1246,11 +1255,22 @@ watch(() => props.component, (newComponent) => {
   if (newComponent) {
     console.log('ComponentSettings - Novo componente recebido:', newComponent);
     
+    // Limpa o timeout para evitar que atualizações pendentes sejam aplicadas ao novo componente
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
+      updateTimeout = null;
+    }
+    
     // Cria uma cópia profunda das configurações iniciais
     const initialSettings = JSON.parse(JSON.stringify(initializeSettings()));
     
     // Cria uma cópia profunda das props do componente
     const componentProps = newComponent.props ? JSON.parse(JSON.stringify(newComponent.props)) : {};
+    
+    // Limpa as configurações atuais para evitar mesclar com valores antigos
+    Object.keys(settings).forEach(key => {
+      delete settings[key];
+    });
     
     // Mescla as configurações garantindo que allowNesting seja um booleano
     Object.assign(settings, {
@@ -1261,5 +1281,5 @@ watch(() => props.component, (newComponent) => {
     
     console.log('ComponentSettings - Settings após atualização com allowNesting:', settings.allowNesting);
   }
-}, { deep: true });
+}, { deep: true, immediate: true });
 </script>
