@@ -1188,6 +1188,20 @@
   :deep(.sortable-ghost) {
     @apply bg-white dark:bg-gray-800 opacity-50 !important;
   }
+
+  /* Remove as barras diagonais do grid */
+  :deep(.grid) {
+    background-image: none !important;
+  }
+
+  :deep(.grid > *) {
+    background-image: none !important;
+  }
+
+  :deep(.grid::before),
+  :deep(.grid::after) {
+    display: none !important;
+  }
   
   /* Ajuste da área principal */
   .page-builder .flex-1 {
@@ -1208,11 +1222,5 @@
 
   :deep(.select-options) {
     z-index: 60 !important;
-  }
-
-  /* Ajustes para o grid */
-  :deep(.grid) {
-    display: grid !important;
-    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
   }
   </style> 

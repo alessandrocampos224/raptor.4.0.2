@@ -15,6 +15,7 @@
       overlayOpacity ? 'relative' : '',
       textAlignment === 'center' ? 'text-center' : '',
       textAlignment === 'right' ? 'text-right' : '',
+      containerWidth === 'full' ? 'w-full' : 'container mx-auto'
     ]"
     :style="{
       backgroundImage: backgroundImage ? `url(${backgroundImage})` : null,
@@ -29,10 +30,10 @@
 
     <div :class="[
       'relative z-10',
-      containerWidth === 'full' ? '' : 'container mx-auto',
-      containerWidth === 'narrow' ? 'max-w-4xl' : ''
+      textAlignment === 'center' ? 'text-center' : '',
+      textAlignment === 'right' ? 'text-right' : ''
     ]">
-      <!-- Conteúdo estático -->
+      <!-- Conteúdo estático ou item único -->
       <template v-if="dataSource !== 'dynamic' || contentType === 'single'">
         <h1 :class="[
           {
@@ -67,6 +68,16 @@
           {{ displaySubtitle }}
         </p>
 
+        <!-- Link para o post quando for item único -->
+        <div v-if="dataSource === 'dynamic' && contentType === 'single' && contentLink?.data" class="mt-6">
+          <a 
+            :href="`/posts/${contentLink.data.slug}`"
+            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-tenant-primary hover:bg-tenant-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tenant-primary"
+          >
+            Ver post completo
+          </a>
+        </div>
+
         <!-- Botões de ação -->
         <div 
           v-if="actions && actions.length > 0"
@@ -94,62 +105,82 @@
 
       <!-- Listagem de categorias -->
       <template v-else-if="dataSource === 'dynamic' && contentType === 'category' && selectedCategories && selectedCategories.length > 0">
-        <div class="categories-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div 
-            v-for="(category, index) in selectedCategories" 
-            :key="index"
-            class="category-card bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ category.name }}</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">{{ category.description || 'Sem descrição' }}</p>
-            <a :href="`/categorias/${category.slug}`" class="text-tenant-primary hover:underline text-sm font-medium">
-              Ver mais
-            </a>
+        <div v-if="isLoading" class="flex items-center justify-center py-4">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+        </div>
+        <div v-else>
+          <!-- Layout Grid -->
+          <div v-if="layout === 'grid'" class="categories-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div 
+              v-for="category in loadedCategories" 
+              :key="category.id"
+              class="category-card bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all p-6 border border-gray-200 dark:border-gray-700"
+            >
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ category.name }}</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">{{ category.description || 'Sem descrição' }}</p>
+              <a :href="`/categorias/${category.slug}`" class="text-tenant-primary hover:underline text-sm font-medium">
+                Ver mais
+              </a>
+            </div>
+          </div>
+          
+          <!-- Layout Lista -->          
+          <div v-else class="categories-list space-y-2">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Categorias</h2>
+              <span class="text-sm text-gray-500">{{ loadedCategories.length }} categorias</span>
+            <div 
+              v-for="category in loadedCategories" 
+              :key="category.id"
+              class="category-item"
+            >
+              <a 
+                :href="`/categorias/${category.slug}`" 
+                class="text-gray-800 dark:text-gray-200 hover:text-tenant-primary dark:hover:text-tenant-primary transition-colors duration-200 font-medium text-base uppercase"
+              >
+                {{ category.name }}
+              </a>
+            </div>
           </div>
         </div>
       </template>
 
       <!-- Listagem de posts -->
       <template v-else-if="dataSource === 'dynamic' && contentType === 'posts'">
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-          {{ filterCategory === 'all' ? 'Todos os Posts' : `Posts da categoria: ${getCategoryName(filterCategory)}` }}
-        </h2>
-        
         <div v-if="isLoading" class="flex items-center justify-center py-4">
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
         </div>
-        <div v-else-if="error" class="p-2 text-sm text-red-500">
-          {{ error }}
-        </div>
-        <div v-else class="posts-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div 
-            v-for="post in filteredPosts.slice(0, postsLimit)" 
-            :key="post.id"
-            class="post-card bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden"
-          >
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-              <div class="flex items-center space-x-2">
-                <Checkbox 
-                  :id="`post-${post.id}`"
-                  :checked="localSelectedPosts.includes(post.id)"
-                  @update:checked="(checked) => updateSelectedPosts(post.id, checked)"
+        <div v-else>
+          <div class="posts-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div 
+              v-for="post in posts" 
+              :key="post.id"
+              class="post-card bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden"
+            >
+              <div v-if="post.featured_image" class="aspect-w-16 aspect-h-9">
+                <img 
+                  :src="post.featured_image" 
+                  :alt="post.name"
+                  class="w-full h-48 object-cover"
                 />
-                <label :for="`post-${post.id}`" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Selecionar
-                </label>
               </div>
-            </div>
-            <div v-if="post.image" class="post-image h-40 bg-gray-200 dark:bg-gray-700">
-              <img :src="post.image" :alt="post.name" class="w-full h-full object-cover">
-            </div>
-            <div class="p-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ post.name }}</h3>
-              <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">{{ post.description }}</p>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-500 dark:text-gray-500">{{ post.created_at }}</span>
-                <a :href="`/posts/${post.slug}`" class="text-tenant-primary hover:underline text-sm font-medium">
-                  Ler mais
-                </a>
+              <div class="p-6">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  {{ post.name }}
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                  {{ post.description || 'Sem descrição' }}
+                </p>
+                <div class="flex justify-between items-center">
+                  <a 
+                    :href="`/posts/${post.slug}`"
+                    class="text-tenant-primary hover:text-tenant-primary-dark font-medium text-sm"
+                  >
+                    Ler mais
+                  </a>
+                  <span v-if="post.category" class="text-xs text-gray-500">
+                    {{ post.category.name }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -272,7 +303,6 @@ const props = defineProps({
     type: String,
     default: 'static'
   },
-  // Novas propriedades para o sistema de colunas e aninhamento
   columnSpan: {
     type: [Number, String],
     default: 12
@@ -281,7 +311,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  // Novas propriedades para listagens dinâmicas
   contentType: {
     type: String,
     default: 'single'
@@ -301,122 +330,133 @@ const props = defineProps({
   selectedPosts: {
     type: Array,
     default: () => []
+  },
+  layout: {
+    type: String,
+    default: 'grid'
   }
 })
 
-// Título dinâmico ou estático
+const isLoading = ref(false)
+const error = ref(null)
+const loadedCategories = ref([])
+const posts = ref([])
+
 const displayTitle = computed(() => {
   if (props.dataSource === 'dynamic' && props.contentLink?.data) {
-    return props.contentLink.data.name || props.contentLink.data.title || props.title
+    return props.contentLink.data.name || props.title
   }
   return props.title
 })
 
-// Subtítulo dinâmico ou estático
 const displaySubtitle = computed(() => {
   if (props.dataSource === 'dynamic' && props.contentLink?.data) {
-    return props.contentLink.data.description || props.contentLink.data.excerpt || props.subtitle
+    return props.contentLink.data.description || props.subtitle
   }
   return props.subtitle
 })
 
-// Estado para os posts
-const posts = ref([])
-const isLoading = ref(false)
-const error = ref(null)
+const displayedPosts = computed(() => {
+  return posts.value.slice(0, props.postsLimit)
+})
 
-// Estado local para seleção de posts
-const localSelectedPosts = ref([])
-
-// Inicializar com os posts já selecionados
-watch(() => props.selectedPosts, (newValue) => {
-  localSelectedPosts.value = [...newValue]
-}, { immediate: true })
-
-// Função para atualizar seleção de posts
-const updateSelectedPosts = (postId, checked) => {
-  if (checked) {
-    if (!localSelectedPosts.value.includes(postId)) {
-      localSelectedPosts.value.push(postId)
-    }
-  } else {
-    const index = localSelectedPosts.value.indexOf(postId)
-    if (index !== -1) {
-      localSelectedPosts.value.splice(index, 1)
-    }
-  }
-  emit('update:selectedPosts', localSelectedPosts.value)
-}
-
-// Função para carregar posts
-const loadPosts = async (categoryId = null) => {
+const loadCategories = async () => {
+  if (!props.selectedCategories?.length) return
+  
+  isLoading.value = true
+  error.value = null
+  
   try {
-    isLoading.value = true
-    error.value = null
-    const url = categoryId 
-      ? `/api/page-builder/categories/${categoryId}/posts`
-      : '/api/page-builder/posts'
-    const response = await axios.get(url)
+    const response = await axios.get('/api/page-builder/categories')
     if (response.data.success) {
-      posts.value = response.data.data
+      loadedCategories.value = response.data.data.filter(category => 
+        props.selectedCategories.includes(category.id)
+      )
     } else {
-      error.value = response.data.message || 'Erro ao carregar posts'
-      console.error('Erro ao carregar posts:', response.data.message)
+      error.value = response.data.message || 'Erro ao carregar categorias'
     }
-  } catch (error) {
-    if (error.response && error.response.status === 401) {
-      error.value = 'Você precisa estar autenticado para acessar os posts'
-    } else {
-      error.value = 'Erro ao carregar posts. Tente novamente mais tarde.'
-    }
-    console.error('Erro ao carregar posts:', error)
+  } catch (err) {
+    error.value = 'Erro ao carregar categorias'
+    console.error('Erro ao carregar categorias:', err)
   } finally {
     isLoading.value = false
   }
 }
 
-// Carregar posts quando o componente é montado
-onMounted(async () => {
-  if (props.dataSource === 'dynamic' && props.contentType === 'posts') {
-    await loadPosts(props.filterCategory !== 'all' ? props.filterCategory : null)
-  }
-})
-
-// Watch para mudanças na categoria selecionada
-watch(() => props.filterCategory, async (newValue) => {
-  if (props.dataSource === 'dynamic' && props.contentType === 'posts') {
-    if (newValue && newValue !== 'all') {
-      await loadPosts(newValue)
+const loadPosts = async () => {
+  if (!props.selectedPosts?.length) return
+  
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    const url = props.filterCategory !== 'all' 
+      ? `/api/page-builder/categories/${props.filterCategory}/posts`
+      : '/api/page-builder/posts'
+      
+    const response = await axios.get(url)
+    if (response.data.success) {
+      posts.value = response.data.data.filter(post => props.selectedPosts.includes(post.id))
     } else {
-      await loadPosts()
+      error.value = response.data.message || 'Erro ao carregar posts'
+    }
+  } catch (err) {
+    error.value = 'Erro ao carregar posts'
+    console.error('Erro ao carregar posts:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const updateSelectedPosts = (postId, checked) => {
+  let updatedPosts = [...props.selectedPosts]
+  if (checked) {
+    if (!updatedPosts.includes(postId)) {
+      if (updatedPosts.length < props.postsLimit) {
+        updatedPosts.push(postId)
+      } else {
+        console.warn(`Limite de ${props.postsLimit} posts atingido`)
+        return
+      }
+    }
+  } else {
+    updatedPosts = updatedPosts.filter(id => id !== postId)
+  }
+  emit('update:selectedPosts', updatedPosts)
+}
+
+watch(() => props.selectedCategories, () => {
+  if (props.dataSource === 'dynamic' && props.contentType === 'category') {
+    loadCategories()
+  }
+}, { deep: true })
+
+watch(() => [props.filterCategory, props.contentType], () => {
+  if (props.dataSource === 'dynamic' && props.contentType === 'posts') {
+    loadPosts()
+  }
+}, { deep: true })
+
+// Watch para mudanças nos posts selecionados
+watch(() => props.selectedPosts, () => {
+  if (props.dataSource === 'dynamic' && props.contentType === 'posts') {
+    loadPosts()
+  }
+}, { deep: true })
+
+onMounted(() => {
+  if (props.dataSource === 'dynamic') {
+    if (props.contentType === 'category') {
+      loadCategories()
+    } else if (props.contentType === 'posts') {
+      loadPosts()
     }
   }
 })
 
-// Computed para filtrar os posts
-const filteredPosts = computed(() => {
-  if (!posts.value) return []
-  return props.selectedPosts && props.selectedPosts.length > 0
-    ? posts.value.filter(post => props.selectedPosts.includes(post.id))
-    : posts.value
-})
-
-// Obter nome da categoria pelo ID
 const getCategoryName = (categoryId) => {
-  const categories = [
-    { id: 1, name: 'Audiência Pública' },
-    { id: 2, name: 'Prova de Vida' },
-    { id: 3, name: 'Auditoria' },
-    { id: 4, name: 'Certificação' },
-    { id: 5, name: 'Notícias' },
-    { id: 6, name: 'Convivência' },
-    { id: 7, name: 'Serviços' },
-    { id: 8, name: 'Formação' },
-    { id: 9, name: 'Informativo' }
-  ]
-  
-  const category = categories.find(cat => cat.id === parseInt(categoryId))
-  return category ? category.name : 'Categoria Desconhecida'
+  const category = loadedCategories.value.find(cat => cat.id === parseInt(categoryId))
+  return category ? category.name : 'Categoria'
 }
 </script>
 
@@ -487,5 +527,9 @@ const getCategoryName = (categoryId) => {
 
 .spacing-h-spacious {
   @apply px-8 sm:px-10 lg:px-12;
+}
+
+.category-item:not(:last-child) {
+  @apply border-b border-gray-100;
 }
 </style> 

@@ -109,45 +109,53 @@
                     <div v-if="isLoading" class="flex items-center justify-center py-4">
                       <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
                     </div>
-                    <div v-else v-for="category in availableCategories" :key="category.id" class="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        :id="`category-${category.id}`"
-                        :checked="settings.selectedCategories?.includes(category.id)"
-                        @change="(e) => {
-                          if (!Array.isArray(settings.selectedCategories)) {
-                            settings.selectedCategories = [];
-                          }
-                          if (e.target.checked) {
-                            settings.selectedCategories.push(category.id);
-                          } else {
-                            settings.selectedCategories = settings.selectedCategories.filter(id => id !== category.id);
-                          }
-                          console.log('Categorias selecionadas atualizadas:', settings.selectedCategories);
-                        }"
-                        class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <Label :for="`category-${category.id}`">{{ category.name }}</Label>
+                    <div v-else class="grid grid-cols-1 gap-2">
+                      <div v-for="category in availableCategories" :key="category.id" class="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          :id="`category-${category.id}`"
+                          :checked="settings.selectedCategories?.includes(category.id)"
+                          @change="(e) => {
+                            if (!Array.isArray(settings.selectedCategories)) {
+                              settings.selectedCategories = [];
+                            }
+                            if (e.target.checked) {
+                              settings.selectedCategories.push(category.id);
+                            } else {
+                              settings.selectedCategories = settings.selectedCategories.filter(id => id !== category.id);
+                            }
+                          }"
+                          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <Label :for="`category-${category.id}`" class="ml-2 text-base uppercase">{{ category.name }}</Label>
+                      </div>
                     </div>
+                  </div>
+
+                  <!-- Opções de Layout -->
+                  <div class="mt-4">
+                    <Label class="mb-1">Layout das Categorias</Label>
+                    <Select v-model="settings.layout">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o layout" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="list">Lista Simples</SelectItem>
+                        <SelectItem value="grid">Grid com Cards</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <!-- Preview das categorias selecionadas -->
                   <div class="mt-6 border-t pt-4">
-                    <h4 class="text-sm font-medium mb-2">Preview</h4>
-                    <div v-if="!settings.selectedCategories || settings.selectedCategories.length === 0" class="p-2 text-sm text-gray-500">
-                      Selecione pelo menos uma categoria para visualizar o preview
+                    <h4 class="text-sm font-medium mb-4">Preview</h4>
+                    <div v-if="!settings.selectedCategories || settings.selectedCategories.length === 0" class="text-sm text-gray-500">
+                      Selecione pelo menos uma categoria para visualizar
                     </div>
-                    <div v-else>
-                      <div class="mb-2 text-xs text-gray-500">
-                        Total de categorias exibidas: {{ settings.selectedCategories.length }}
+                    <div v-else class="space-y-2">
+                      <div v-for="categoryId in settings.selectedCategories" :key="categoryId" class="text-base uppercase font-medium text-gray-800">
+                        {{ availableCategories.find(c => c.id === categoryId)?.name }}
                       </div>
-                      <div class="mb-2 text-xs text-gray-500">
-                        IDs selecionados: {{ settings.selectedCategories.join(', ') }}
-                      </div>
-                      <SelectedCategoriesList
-                        :selected-categories="settings.selectedCategories"
-                        title="Categorias"
-                      />
                     </div>
                   </div>
                 </div>
@@ -179,15 +187,47 @@
                   </div>
                   <div v-else>
                     <div class="mt-4 space-y-2">
-                      <div v-for="post in availablePosts" :key="post.id" class="flex items-center space-x-2">
-                        <Checkbox 
-                          :id="`post-${post.id}`" 
-                          v-model="settings.selectedPosts" 
-                          :value="post.id" 
+                      <div 
+                        v-for="post in availablePosts" 
+                        :key="post.id" 
+                        class="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <input 
+                          type="checkbox" 
+                          :id="`post-${post.id}`"
+                          :value="post.id"
                           :checked="settings.selectedPosts?.includes(post.id)"
+                          @change="(e) => {
+                            if (!Array.isArray(settings.selectedPosts)) {
+                              settings.selectedPosts = [];
+                            }
+                            if (e.target.checked) {
+                              if (settings.selectedPosts.length < settings.postsLimit) {
+                                settings.selectedPosts.push(post.id);
+                              }
+                            } else {
+                              settings.selectedPosts = settings.selectedPosts.filter(id => id !== post.id);
+                            }
+                          }"
+                          class="mt-1 h-4 w-4 rounded border-gray-300 text-tenant-primary focus:ring-tenant-primary"
                         />
-                        <Label :for="`post-${post.id}`">{{ post.name }}</Label>
+                        <div class="flex-1">
+                          <Label :for="`post-${post.id}`" class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
+                            {{ post.name }}
+                          </Label>
+                          <p v-if="post.description" class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                            {{ post.description }}
+                          </p>
+                          <div class="mt-2 flex items-center gap-2">
+                            <span v-if="post.category" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-tenant-primary/10 text-tenant-primary">
+                              {{ post.category.name }}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                    <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                      <span>{{ settings.selectedPosts?.length || 0 }} / {{ settings.postsLimit }} posts selecionados</span>
                     </div>
                   </div>
                 </div>
@@ -1135,6 +1175,7 @@ const availableCategories = ref([])
 const availablePosts = ref([])
 const isLoading = ref(false)
 const error = ref(null)
+const isLoadingPosts = ref(false)
 
 // Props
 const props = defineProps({
@@ -1175,7 +1216,8 @@ const initializeSettings = () => {
     selectedCategories: [],
     selectedPosts: [],
     filterCategory: 'all',
-    postsLimit: 6
+    postsLimit: 6,
+    layout: 'grid'
   }
 
   if (props.component?.type === 'header') {
@@ -1539,4 +1581,28 @@ if (props.component) {
     console.log('ComponentSettings - selectedCategories inicializado como:', settings.selectedCategories)
   }
 }
+
+const loadAvailablePosts = async () => {
+  isLoadingPosts.value = true
+  try {
+    const url = settings.filterCategory !== 'all'
+      ? `/api/page-builder/categories/${settings.filterCategory}/posts`
+      : '/api/page-builder/posts'
+      
+    const response = await axios.get(url)
+    if (response.data.success) {
+      availablePosts.value = response.data.data
+    }
+  } catch (error) {
+    console.error('Erro ao carregar posts:', error)
+  } finally {
+    isLoadingPosts.value = false
+  }
+}
+
+watch(() => settings.filterCategory, () => {
+  if (settings.contentType === 'posts') {
+    loadAvailablePosts()
+  }
+})
 </script> 
