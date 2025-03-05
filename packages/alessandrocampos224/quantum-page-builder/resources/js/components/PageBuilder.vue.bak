@@ -68,7 +68,7 @@
                   class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm cursor-move hover:shadow-md transition-all hover:scale-[1.02] border border-gray-200 dark:border-gray-700"
                 >
                   <div class="flex items-center">
-                    <component :is="element.icon" class="w-5 h-5 mr-2 text-blue-500" />
+                    <component :is="element.icon" class="w-5 h-5 mr-2 text-primary-500" />
                     <span class="text-sm text-gray-900 dark:text-gray-100">{{ element.title }}</span>
                   </div>
                 </div>
@@ -153,9 +153,10 @@
                   `col-span-${element.props?.columnSpan || 12}`,
                   { 'nest-highlight': isDragging && canNestComponent(element) }
                 ]"
+                @dragover.prevent="handleDragOver(element, $event)"
+                @dragleave.prevent="handleDragLeave(element, $event)"
+                @drop.prevent="handleDrop(element, $event)"
                 :data-component-id="element.id"
-                draggable="true"
-                @dragstart="handleDragStart(element, $event)"
               >
                 <!-- Barra de ações do componente -->
                 <div class="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-1 z-50">
@@ -201,7 +202,7 @@
                 <!-- Container do componente -->
                 <div class="p-6 bg-gray-50 dark:bg-gray-900 rounded-t-xl border-b border-gray-200 dark:border-gray-700">
                   <div class="flex items-center space-x-2">
-                    <component :is="element.icon" class="w-5 h-5 text-blue-500" />
+                    <component :is="element.icon" class="w-5 h-5 text-primary-500" />
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ element.type === 'header' ? 'Cabeçalho' : element.type === 'content' ? 'Conteúdo' : element.type === 'benefits' ? 'Benefícios' : element.type === 'simulator' ? 'Simulador' : element.type === 'contact-channels' ? 'Canais de Atendimento' : element.type === 'cards' ? 'Cards' : 'Formulário' }}</span>
                   </div>
                 </div>
@@ -225,11 +226,8 @@
                   
                   <!-- Área de posicionamento livre para componentes aninhados -->
                   <div 
-                    class="relative min-h-[200px] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 overflow-hidden nest-container"
-                    :id="`nest-container-${element.id}`"
-                    @dragover.prevent="handleDragOver(element, $event)"
-                    @dragleave.prevent="handleDragLeave(element, $event)"
-                    @drop.prevent="handleDrop(element, $event)"
+                    class="relative min-h-[200px] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 overflow-hidden"
+                    ref="nestContainer"
                   >
                     <!-- Mensagem quando não há componentes -->
                     <div 
@@ -245,16 +243,14 @@
                     <div 
                       v-for="childElement in element.children" 
                       :key="childElement.id"
-                      class="absolute bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-move nested-component"
+                      class="absolute bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-move"
                       :style="{
                         left: `${childElement.position?.x || 0}px`,
                         top: `${childElement.position?.y || 0}px`,
                         width: `${childElement.position?.width || 200}px`,
-                        height: childElement.position?.height === 'auto' ? 'auto' : `${childElement.position?.height || 'auto'}px`,
+                        height: `${childElement.position?.height || 'auto'}`,
                         zIndex: childElement.position?.zIndex || 1
                       }"
-                      draggable="true"
-                      @dragstart="handleDragStart(childElement, $event)"
                       @mousedown="startDrag($event, element, childElement)"
                       :data-child-id="childElement.id"
                       :data-parent-id="element.id"
@@ -478,11 +474,6 @@ const dragOffsetX = ref(0)
 const dragOffsetY = ref(0)
 const currentDragElement = ref(null)
 const currentDragParent = ref(null)
-const dragStartPosX = ref(0)
-const dragStartPosY = ref(0)
-
-// Adicionar uma flag para controlar se o drop já foi processado
-const dropProcessed = ref(false);
 
 // Função para comparar objetos profundamente
 const isEqual = (obj1, obj2) => {
@@ -960,14 +951,14 @@ const availableComponents = ref([
 const cloneComponent = (component, isNested = false) => {
   console.log('PageBuilder - Clonando componente:', component);
   
-  // Cria uma cópia profunda dos defaultProps ou inicializa um objeto vazio
-  const props = component.defaultProps ? JSON.parse(JSON.stringify(component.defaultProps)) : {};
+  // Cria uma cópia profunda dos defaultProps
+  const props = JSON.parse(JSON.stringify(component.defaultProps));
   
-  // Garante que as propriedades básicas existam e sejam do tipo correto
-  props.style = typeof props.style === 'string' ? props.style : 'default';
-  props.layout = typeof props.layout === 'string' ? props.layout : 'default';
-  props.spacingVertical = typeof props.spacingVertical === 'string' ? props.spacingVertical : 'default';
-  props.spacingHorizontal = typeof props.spacingHorizontal === 'string' ? props.spacingHorizontal : 'default';
+  // Garante que as propriedades básicas existam
+  props.style = props.style || 'default';
+  props.layout = props.layout || 'default';
+  props.spacingVertical = props.spacingVertical || 'default';
+  props.spacingHorizontal = props.spacingHorizontal || 'default';
   
   // Define o columnSpan padrão com base se é um componente aninhado ou não
   props.columnSpan = isNested ? 6 : 6;
@@ -994,11 +985,10 @@ const cloneComponent = (component, isNested = false) => {
       height: 'auto',
       zIndex: 1
     };
+    
+    // Armazena o componente arrastado para uso no handleDrop
+    draggedComponent.value = component;
   }
-  
-  // Sempre armazena o componente original para uso no handleDrop
-  draggedComponent.value = component;
-  console.log('PageBuilder - draggedComponent definido:', draggedComponent.value);
   
   console.log('PageBuilder - Novo componente criado:', newComponent);
   return newComponent;
@@ -1407,7 +1397,7 @@ const handleMainDragAdd = (event) => {
       addedComponent.props.columnSpan = 6;
     }
     // Garantir que allowNesting seja definido como booleano
-    addedComponent.props.allowNesting = true;
+    addedComponent.props.allowNesting = addedComponent.props.allowNesting === true;
     
     console.log('Componente após inicialização com allowNesting:', addedComponent.props.allowNesting);
     
@@ -1424,86 +1414,78 @@ const handleMainDragAdd = (event) => {
 const handleNestedDragAdd = (parentComponent, event) => {
   console.log('Componente adicionado a um container aninhado:', event);
   
-  try {
-    // Cria uma cópia profunda do componente pai para evitar mutações diretas
-    const updatedParent = JSON.parse(JSON.stringify(parentComponent));
+  // Cria uma cópia profunda do componente pai para evitar mutações diretas
+  const updatedParent = JSON.parse(JSON.stringify(parentComponent));
+  
+  // Garantir que o componente pai tenha a propriedade children
+  if (!updatedParent.children) {
+    updatedParent.children = [];
+  }
+  
+  // Garantir que o componente aninhado tenha as propriedades necessárias
+  if (updatedParent.children[event.newIndex]) {
+    const addedComponent = updatedParent.children[event.newIndex];
     
-    // Garantir que o componente pai tenha a propriedade children
-    if (!updatedParent.children) {
-      updatedParent.children = [];
+    // Inicializa props se não existir
+    if (!addedComponent.props) {
+      const componentType = addedComponent.type;
+      const componentTemplate = availableComponents.value.find(c => c.type === componentType);
+      if (componentTemplate) {
+        addedComponent.props = cloneComponent(componentTemplate, true).props;
+      } else {
+        addedComponent.props = getDefaultProps(addedComponent.type);
+      }
     }
     
-    // Garantir que o componente aninhado tenha as propriedades necessárias
-    if (updatedParent.children[event.newIndex]) {
-      const addedComponent = updatedParent.children[event.newIndex];
-      
-      // Inicializa props se não existir
-      if (!addedComponent.props) {
-        const componentType = addedComponent.type;
-        const componentTemplate = availableComponents.value.find(c => c.type === componentType);
-        if (componentTemplate) {
-          addedComponent.props = cloneComponent(componentTemplate, true).props;
-        } else {
-          addedComponent.props = getDefaultProps(addedComponent.type);
-        }
-      }
-      
-      // Sempre inicializa children como array vazio
-      addedComponent.children = [];
-      
-      // Define columnSpan padrão para componentes aninhados (metade da largura)
-      addedComponent.props.columnSpan = 6;
-      
-      // Garante que allowNesting seja um booleano
-      addedComponent.props.allowNesting = true;
-      
-      // Calcular posição com base no evento ou usar valores padrão
-      const container = document.getElementById(`nest-container-${updatedParent.id}`);
-      let x = 0;
-      let y = 0;
-      
-      if (container && event.originalEvent) {
-        const containerRect = container.getBoundingClientRect();
-        x = event.originalEvent.clientX - containerRect.left;
-        y = event.originalEvent.clientY - containerRect.top;
-        
-        // Garantir que as coordenadas estejam dentro do container
-        x = Math.max(0, Math.min(x, containerRect.width - 200)); // 200 é a largura padrão
-        y = Math.max(0, y);
-        
-        console.log('Posição calculada para componente aninhado:', { x, y, containerRect });
-      }
-      
-      addedComponent.position = {
-        x: x,
-        y: y,
-        width: 200,
-        height: 'auto',
-        zIndex: updatedParent.children.length
-      };
-      
-      // Atualizar o componente pai no array principal
-      const parentIndex = pageComponents.value.findIndex(c => c.id === updatedParent.id);
-      if (parentIndex !== -1) {
-        // Cria uma cópia profunda dos componentes para evitar mutações diretas
-        const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value));
-        
-        // Atualiza o componente pai com as alterações
-        updatedComponents[parentIndex] = updatedParent;
-        
-        // Atualiza o estado
-        pageComponents.value = updatedComponents;
-        
-        // Força a atualização do v-model
-        nextTick(() => {
-          emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
-        });
-        
-        console.log('Componente aninhado adicionado com sucesso via handleNestedDragAdd:', addedComponent);
-      }
+    // Sempre inicializa children como array vazio
+    addedComponent.children = [];
+    
+    // Define columnSpan padrão para componentes aninhados (metade da largura)
+    addedComponent.props.columnSpan = 6;
+    
+    // Garante que allowNesting seja um booleano
+    addedComponent.props.allowNesting = addedComponent.props.allowNesting === true;
+    
+    // Adicionar posição ao componente
+    // Calcular posição com base no evento ou usar valores padrão
+    const container = event.target.closest('[ref="nestContainer"]');
+    let x = 0;
+    let y = 0;
+    
+    if (container && event.originalEvent) {
+      const containerRect = container.getBoundingClientRect();
+      x = event.originalEvent.clientX - containerRect.left;
+      y = event.originalEvent.clientY - containerRect.top;
     }
-  } catch (error) {
-    console.error('Erro ao adicionar componente aninhado via handleNestedDragAdd:', error);
+    
+    addedComponent.position = {
+      x: x,
+      y: y,
+      width: 200,
+      height: 'auto',
+      zIndex: updatedParent.children.length
+    };
+    
+    // Atualizar o componente pai no array principal
+    const parentIndex = pageComponents.value.findIndex(c => c.id === updatedParent.id);
+    if (parentIndex !== -1) {
+      // Cria uma cópia profunda dos componentes para evitar mutações diretas
+      const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value));
+      
+      // Atualiza o componente pai com as alterações
+      updatedComponents[parentIndex] = updatedParent;
+      
+      // Atualiza o estado
+      pageComponents.value = updatedComponents;
+      
+      // Força a atualização do v-model
+      nextTick(() => {
+        emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
+      });
+    }
+    
+    // Log para debug
+    console.log('Componente aninhado após inicialização:', addedComponent);
   }
 }
 
@@ -1528,7 +1510,7 @@ const ensureAllowNestingIsBoolean = (component) => {
   }
   
   // Garante que allowNesting seja um booleano
-  componentCopy.props.allowNesting = true;
+  componentCopy.props.allowNesting = componentCopy.props.allowNesting === true;
   console.log(`Garantindo que allowNesting seja booleano para componente ${componentCopy.id}:`, componentCopy.props.allowNesting);
   
   // Garante que children sempre seja um array
@@ -1556,385 +1538,153 @@ const isNestingTarget = (component) => {
 
 const handleDragOver = (component, event) => {
   if (canNestComponent(component)) {
-    event.preventDefault();
-    
-    // Se não temos um componente sendo arrastado, vamos tentar obter do dataTransfer
-    if (!draggedComponent.value) {
-      try {
-        const componentData = event.dataTransfer.getData('application/json');
-        if (componentData) {
-          const parsedData = JSON.parse(componentData);
-          console.log('Dados do componente arrastado obtidos do dataTransfer:', parsedData);
-          
-          // Se o componente arrastado for aninhado, precisamos encontrá-lo no componente pai
-          if (parsedData.isNested) {
-            // Tentar obter os dados do pai
-            const parentData = event.dataTransfer.getData('parent-data');
-            if (parentData) {
-              const parsedParentData = JSON.parse(parentData);
-              const parentId = parsedParentData.id;
-              
-              // Encontrar o componente pai
-              const parentComponent = pageComponents.value.find(c => c.id === parentId);
-              if (parentComponent && parentComponent.children) {
-                // Encontrar o componente aninhado no pai
-                const nestedComponent = parentComponent.children.find(c => c.id === parsedData.id);
-                if (nestedComponent) {
-                  draggedComponent.value = nestedComponent;
-                  console.log('Componente aninhado encontrado no pai:', nestedComponent);
-                }
-              }
-            } else {
-              // Se não temos os dados do pai, procurar em todos os componentes
-              for (const parentComp of pageComponents.value) {
-                if (parentComp.children && parentComp.children.length > 0) {
-                  const nestedComp = parentComp.children.find(c => c.id === parsedData.id);
-                  if (nestedComp) {
-                    draggedComponent.value = nestedComp;
-                    console.log('Componente aninhado encontrado:', nestedComp);
-                    break;
-                  }
-                }
-              }
-            }
-          } else {
-            // Encontrar o componente original na lista de componentes disponíveis ou no array principal
-            const originalComponent = pageComponents.value.find(c => c.id === parsedData.id) || 
-                                     availableComponents.value.find(c => c.type === parsedData.type);
-            if (originalComponent) {
-              draggedComponent.value = originalComponent;
-              console.log('Componente arrastado definido a partir do dataTransfer:', draggedComponent.value);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao obter dados do componente arrastado:', error);
-      }
-    }
-    
-    // Não permitir aninhamento dentro do próprio componente
-    if (draggedComponent.value && draggedComponent.value.id === component.id) {
-      console.log('Não é possível aninhar um componente dentro dele mesmo');
-      return;
-    }
-    
-    nestingTarget.value = component;
-    isDragging.value = true;
-    
-    // Adicionar classe de destaque ao container de aninhamento
-    const nestContainer = document.getElementById(`nest-container-${component.id}`);
-    if (nestContainer) {
-      nestContainer.classList.add('drag-over');
-      console.log('Drag over na área de aninhamento do componente:', component.id);
-    } else {
-      console.log('Container de aninhamento não encontrado para o componente:', component.id);
-    }
+    event.preventDefault()
+    nestingTarget.value = component
+    isDragging.value = true
   }
 }
 
 const handleDragLeave = (component, event) => {
   if (nestingTarget.value && nestingTarget.value.id === component.id) {
-    // Verificar se o cursor realmente saiu do elemento ou apenas entrou em um filho
-    const rect = event.currentTarget.getBoundingClientRect();
+    const rect = event.currentTarget.getBoundingClientRect()
     const isInside = (
       event.clientX >= rect.left &&
       event.clientX <= rect.right &&
       event.clientY >= rect.top &&
       event.clientY <= rect.bottom
-    );
+    )
     
     if (!isInside) {
-      console.log('Cursor saiu da área de aninhamento do componente:', component.id);
-      
-      // Remover classe de destaque do container de aninhamento
-      const nestContainer = document.getElementById(`nest-container-${component.id}`);
-      if (nestContainer) {
-        nestContainer.classList.remove('drag-over');
-        console.log('Drag leave da área de aninhamento do componente:', component.id);
-      } else {
-        console.log('Container de aninhamento não encontrado para o componente:', component.id);
-      }
-      
-      // Não limpar o draggedComponent aqui para permitir que o componente seja arrastado para outro local
-      // Apenas limpar o nestingTarget
-      nestingTarget.value = null;
+      nestingTarget.value = null
+      isDragging.value = false
     }
   }
 }
 
 const handleDrop = (component, event) => {
-  // Impedir a propagação do evento para evitar que o drop seja tratado múltiplas vezes
-  event.preventDefault();
-  event.stopPropagation();
+  if (!canNestComponent(component) || !draggedComponent.value) return
   
-  // Verificar se o drop já foi processado neste ciclo de eventos
-  if (dropProcessed.value) {
-    console.log('Drop já processado, ignorando');
-    return;
+  // Obter a posição relativa dentro do container
+  const containerRect = event.currentTarget.querySelector('[ref="nestContainer"]')?.getBoundingClientRect() || 
+                        event.currentTarget.getBoundingClientRect()
+  
+  const x = event.clientX - containerRect.left
+  const y = event.clientY - containerRect.top
+  
+  // Clonar o componente arrastado
+  const newComponent = cloneComponent(draggedComponent.value, true)
+  
+  // Adicionar posição ao componente
+  newComponent.position = {
+    x,
+    y,
+    width: 200,
+    height: 'auto',
+    zIndex: component.children?.length + 1 || 1
   }
   
-  console.log('handleDrop chamado para o componente:', component.id);
-  console.log('draggedComponent:', draggedComponent.value);
-  
-  if (!canNestComponent(component) || !draggedComponent.value) {
-    console.log('Não é possível aninhar o componente ou não há componente sendo arrastado');
-    return;
+  // Adicionar o componente como filho
+  if (!component.children) {
+    component.children = []
   }
   
-  // Marcar o drop como processado
-  dropProcessed.value = true;
+  component.children.push(newComponent)
   
-  // Resetar a flag após um curto período
-  setTimeout(() => {
-    dropProcessed.value = false;
-  }, 100);
+  // Resetar estado
+  nestingTarget.value = null
+  draggedComponent.value = null
+  isDragging.value = false
   
-  // Obter a área de aninhamento (container) usando o ID único
-  const nestContainer = document.getElementById(`nest-container-${component.id}`);
-  if (!nestContainer) {
-    console.log('Container de aninhamento não encontrado para o componente:', component.id);
-    return;
-  }
-  
-  // Remover classe de destaque
-  nestContainer.classList.remove('drag-over');
-  
-  // Obter a posição relativa dentro do container de aninhamento
-  const containerRect = nestContainer.getBoundingClientRect();
-  
-  // Calcular a posição relativa ao container
-  let x = event.clientX - containerRect.left;
-  let y = event.clientY - containerRect.top;
-  
-  // Verificar se o drop ocorreu dentro da área de aninhamento
-  if (x < 0 || y < 0 || x > containerRect.width || y > containerRect.height) {
-    console.log('Drop fora da área de aninhamento');
-    nestingTarget.value = null;
-    draggedComponent.value = null;
-    isDragging.value = false;
-    return;
-  }
-  
-  // Garantir que o componente fique dentro dos limites do container
-  x = Math.max(0, Math.min(x, containerRect.width - 200)); // 200 é a largura padrão
-  y = Math.max(0, y);
-  
-  console.log('Drop dentro da área de aninhamento:', { x, y, containerRect });
-  
-  try {
-    // Verificar se o componente arrastado já existe no array principal
-    // Se existir, vamos movê-lo em vez de criar um novo
-    let newComponent;
-    let shouldRemoveOriginal = false;
-    let existingIndex = -1;
-    const draggedId = draggedComponent.value.id;
-    
-    // Verificar se o componente arrastado já existe no array principal
-    existingIndex = pageComponents.value.findIndex(c => c.id === draggedId);
-    
-    // Verificar se o componente está em algum componente aninhado
-    let parentOfNested = null;
-    let nestedIndex = -1;
-    
-    if (existingIndex === -1) {
-      // Procurar em todos os componentes aninhados
-      for (const parentComp of pageComponents.value) {
-        if (parentComp.children && parentComp.children.length > 0) {
-          const index = parentComp.children.findIndex(c => c.id === draggedId);
-          if (index !== -1) {
-            parentOfNested = parentComp;
-            nestedIndex = index;
-            break;
-          }
-        }
-      }
-    }
-    
-    if (existingIndex !== -1) {
-      // É um componente existente no array principal, vamos movê-lo
-      console.log('Movendo componente existente do array principal:', draggedComponent.value);
-      newComponent = JSON.parse(JSON.stringify(pageComponents.value[existingIndex]));
-      shouldRemoveOriginal = true;
-    } else if (parentOfNested && nestedIndex !== -1) {
-      // É um componente aninhado em outro componente, vamos movê-lo
-      console.log('Movendo componente aninhado de outro componente:', draggedComponent.value);
-      newComponent = JSON.parse(JSON.stringify(parentOfNested.children[nestedIndex]));
-      
-      // Remover o componente do pai original
-      const updatedParent = JSON.parse(JSON.stringify(parentOfNested));
-      updatedParent.children.splice(nestedIndex, 1);
-      
-      // Atualizar o pai original no array principal
-      const parentIndex = pageComponents.value.findIndex(c => c.id === parentOfNested.id);
-      if (parentIndex !== -1) {
-        const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value));
-        updatedComponents[parentIndex] = updatedParent;
-        pageComponents.value = updatedComponents;
-      }
-    } else {
-      // É um novo componente, vamos criar um clone
-      console.log('Criando novo componente:', draggedComponent.value);
-      newComponent = cloneComponent(draggedComponent.value, true);
-    }
-    
-    // Adicionar posição ao componente
-    newComponent.position = {
-      x: x,
-      y: y,
-      width: 200,
-      height: 'auto',
-      zIndex: component.children?.length + 1 || 1
-    };
-    
-    // Criar uma cópia profunda do componente pai para evitar mutações diretas
-    const updatedComponent = JSON.parse(JSON.stringify(component));
-    
-    // Adicionar o componente como filho
-    if (!updatedComponent.children) {
-      updatedComponent.children = [];
-    }
-    
-    // Adicionar o novo componente à lista de filhos
-    updatedComponent.children.push(newComponent);
-    
-    // Atualizar o componente pai no array principal
-    const parentIndex = pageComponents.value.findIndex(c => c.id === updatedComponent.id);
-    if (parentIndex !== -1) {
-      // Cria uma cópia profunda dos componentes para evitar mutações diretas
-      const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value));
-      
-      // Atualiza o componente pai com as alterações
-      updatedComponents[parentIndex] = updatedComponent;
-      
-      // Se estamos movendo um componente existente do array principal, removê-lo
-      if (shouldRemoveOriginal && existingIndex !== -1) {
-        updatedComponents.splice(existingIndex, 1);
-      }
-      
-      // Atualiza o estado
-      pageComponents.value = updatedComponents;
-      
-      // Força a atualização do v-model
-      nextTick(() => {
-        emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
-      });
-      
-      console.log('Componente aninhado adicionado com sucesso via handleDrop:', newComponent);
-    }
-    
-    // Limpar o estado
-    nestingTarget.value = null;
-    draggedComponent.value = null;
-    isDragging.value = false;
-  } catch (error) {
-    console.error('Erro ao adicionar componente aninhado via handleDrop:', error);
-    // Limpar o estado mesmo em caso de erro
-    nestingTarget.value = null;
-    draggedComponent.value = null;
-    isDragging.value = false;
-  }
+  // Atualizar o modelo
+  emit('update:modelValue', JSON.parse(JSON.stringify(pageComponents.value)))
 }
 
 const startDrag = (event, parent, child) => {
-  console.log('Iniciando arrasto manual do componente aninhado:', child.id);
-  
   // Evitar iniciar o drag se estiver clicando em um botão ou alça de redimensionamento
   if (
     event.target.closest('button') || 
     event.target.classList.contains('resize-handle')
   ) {
-    return;
+    return
   }
   
-  // Impedir o comportamento padrão de drag and drop do navegador
-  event.preventDefault();
+  event.preventDefault()
   
   // Armazenar o elemento sendo arrastado e seu pai
-  currentDragParent.value = parent;
-  currentDragElement.value = child;
+  currentDragParent.value = parent
+  currentDragElement.value = child
   
   // Obter a posição inicial do mouse
-  dragStartX.value = event.clientX;
-  dragStartY.value = event.clientY;
+  dragStartX.value = event.clientX
+  dragStartY.value = event.clientY
   
-  // Obter a posição inicial do componente
-  dragStartPosX.value = child.position?.x || 0;
-  dragStartPosY.value = child.position?.y || 0;
+  // Obter o offset do mouse em relação ao elemento
+  const rect = event.currentTarget.getBoundingClientRect()
+  dragOffsetX.value = dragStartX.value - rect.left
+  dragOffsetY.value = dragStartY.value - rect.top
   
-  // Obter o container de aninhamento
-  const nestContainer = document.getElementById(`nest-container-${parent.id}`);
-  if (!nestContainer) {
-    console.log('Container de aninhamento não encontrado para o componente:', parent.id);
-    return;
-  }
-  
-  // Adicionar event listeners para mousemove e mouseup
-  document.addEventListener('mousemove', handleDragMove);
-  document.addEventListener('mouseup', handleDragEnd);
+  // Adicionar event listeners para o movimento e fim do drag
+  document.addEventListener('mousemove', handleDragMove)
+  document.addEventListener('mouseup', handleDragEnd)
 }
 
 const handleDragMove = (event) => {
-  if (!currentDragElement.value || !currentDragParent.value) return;
+  if (!currentDragElement.value || !currentDragParent.value) return
   
-  // Calcular o deslocamento do mouse
-  const deltaX = event.clientX - dragStartX.value;
-  const deltaY = event.clientY - dragStartY.value;
+  // Obter a posição atual do mouse
+  const currentX = event.clientX
+  const currentY = event.clientY
   
-  // Calcular a nova posição
-  let newX = dragStartPosX.value + deltaX;
-  let newY = dragStartPosY.value + deltaY;
+  // Obter o container pai
+  const container = document.querySelector(`[data-component-id="${currentDragParent.value.id}"] [ref="nestContainer"]`)
+  if (!container) return
   
-  // Obter o container de aninhamento
-  const nestContainer = document.getElementById(`nest-container-${currentDragParent.value.id}`);
-  if (!nestContainer) return;
+  const containerRect = container.getBoundingClientRect()
   
-  // Obter as dimensões do container
-  const containerRect = nestContainer.getBoundingClientRect();
+  // Calcular a nova posição relativa ao container
+  let newX = currentX - containerRect.left - dragOffsetX.value
+  let newY = currentY - containerRect.top - dragOffsetY.value
   
-  // Garantir que o componente fique dentro dos limites do container
-  newX = Math.max(0, Math.min(newX, containerRect.width - 200)); // 200 é a largura padrão
-  newY = Math.max(0, newY);
+  // Limitar a posição dentro do container
+  newX = Math.max(0, Math.min(newX, containerRect.width - (currentDragElement.value.position?.width || 200)))
+  newY = Math.max(0, Math.min(newY, containerRect.height - 100)) // Altura mínima estimada
   
-  // Atualizar a posição do elemento visualmente durante o arrasto
-  const element = document.querySelector(`[data-child-id="${currentDragElement.value.id}"][data-parent-id="${currentDragParent.value.id}"]`);
-  if (element) {
-    element.style.left = `${newX}px`;
-    element.style.top = `${newY}px`;
+  // Atualizar a posição do elemento
+  const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value))
+  const parentIndex = updatedComponents.findIndex(c => c.id === currentDragParent.value.id)
+  
+  if (parentIndex !== -1) {
+    const childIndex = updatedComponents[parentIndex].children.findIndex(c => c.id === currentDragElement.value.id)
+    
+    if (childIndex !== -1) {
+      if (!updatedComponents[parentIndex].children[childIndex].position) {
+        updatedComponents[parentIndex].children[childIndex].position = {
+          x: 0,
+          y: 0,
+          zIndex: childIndex + 1
+        }
+      }
+      
+      updatedComponents[parentIndex].children[childIndex].position.x = newX
+      updatedComponents[parentIndex].children[childIndex].position.y = newY
+      
+      // Atualizar o estado
+      pageComponents.value = updatedComponents
+    }
   }
 }
 
-const handleDragEnd = (event) => {
-  if (!currentDragElement.value || !currentDragParent.value) return;
+const handleDragEnd = () => {
+  // Remover event listeners
+  document.removeEventListener('mousemove', handleDragMove)
+  document.removeEventListener('mouseup', handleDragEnd)
   
-  // Remover os event listeners
-  document.removeEventListener('mousemove', handleDragMove);
-  document.removeEventListener('mouseup', handleDragEnd);
+  // Resetar estado
+  currentDragParent.value = null
+  currentDragElement.value = null
   
-  // Calcular o deslocamento final do mouse
-  const deltaX = event.clientX - dragStartX.value;
-  const deltaY = event.clientY - dragStartY.value;
-  
-  // Calcular a nova posição
-  let newX = dragStartPosX.value + deltaX;
-  let newY = dragStartPosY.value + deltaY;
-  
-  // Obter o container de aninhamento
-  const nestContainer = document.getElementById(`nest-container-${currentDragParent.value.id}`);
-  if (!nestContainer) return;
-  
-  // Obter as dimensões do container
-  const containerRect = nestContainer.getBoundingClientRect();
-  
-  // Garantir que o componente fique dentro dos limites do container
-  newX = Math.max(0, Math.min(newX, containerRect.width - 200)); // 200 é a largura padrão
-  newY = Math.max(0, newY);
-  
-  // Atualizar a posição do componente no estado
-  moveNestedComponent(currentDragParent.value, currentDragElement.value, { x: newX, y: newY });
-  
-  // Limpar o estado
-  currentDragParent.value = null;
-  currentDragElement.value = null;
+  // Atualizar o modelo
+  emit('update:modelValue', JSON.parse(JSON.stringify(pageComponents.value)))
 }
 
 const startResize = (event, parent, child, direction) => {
@@ -2000,7 +1750,7 @@ const handleResizeMove = (event) => {
     const childIndex = updatedComponents[parentIndex].children.findIndex(c => c.id === currentDragElement.value.id)
     
     if (childIndex !== -1) {
-      if (!updatedComponents[parentIndex].children[childIndex].position) {
+      if (!updatedComponents[parentIndex].children[childIndex].position]) {
         updatedComponents[parentIndex].children[childIndex].position = {
           x: 0,
           y: 0,
@@ -2057,7 +1807,7 @@ const bringToFront = (parent, child) => {
     const childIndex = updatedComponents[parentIndex].children.findIndex(c => c.id === child.id)
     
     if (childIndex !== -1) {
-      if (!updatedComponents[parentIndex].children[childIndex].position) {
+      if (!updatedComponents[parentIndex].children[childIndex].position]) {
         updatedComponents[parentIndex].children[childIndex].position = {
           x: 0,
           y: 0,
@@ -2091,7 +1841,7 @@ const sendToBack = (parent, child) => {
     const childIndex = updatedComponents[parentIndex].children.findIndex(c => c.id === child.id)
     
     if (childIndex !== -1) {
-      if (!updatedComponents[parentIndex].children[childIndex].position) {
+      if (!updatedComponents[parentIndex].children[childIndex].position]) {
         updatedComponents[parentIndex].children[childIndex].position = {
           x: 0,
           y: 0,
@@ -2137,109 +1887,6 @@ const unnestComponent = (parent, child) => {
     }
   }
 }
-
-const handleDragStart = (component, event) => {
-  console.log('Iniciando arrasto do componente:', component.id);
-  
-  // Definir o componente arrastado
-  draggedComponent.value = component;
-  isDragging.value = true;
-  
-  // Verificar se o componente está sendo arrastado de uma área aninhada
-  const isNestedComponent = !!component.position;
-  
-  // Armazenar dados do componente no dataTransfer para uso posterior
-  try {
-    const componentData = {
-      id: component.id,
-      type: component.type,
-      isNested: isNestedComponent
-    };
-    
-    // Armazenar os dados do componente no dataTransfer
-    event.dataTransfer.setData('application/json', JSON.stringify(componentData));
-    event.dataTransfer.effectAllowed = 'move';
-    
-    // Se for um componente aninhado, precisamos encontrar o componente pai
-    if (isNestedComponent) {
-      // Encontrar o elemento pai usando os atributos data-
-      const element = event.currentTarget;
-      const parentId = element.getAttribute('data-parent-id');
-      
-      if (parentId) {
-        // Armazenar o ID do pai no dataTransfer
-        const parentData = {
-          id: parentId
-        };
-        event.dataTransfer.setData('parent-data', JSON.stringify(parentData));
-        console.log('Componente aninhado sendo arrastado, pai:', parentId);
-      }
-    }
-    
-    // Definir uma imagem de arrasto personalizada para melhorar o feedback visual
-    const dragImage = document.createElement('div');
-    dragImage.textContent = component.type;
-    dragImage.style.padding = '8px';
-    dragImage.style.background = '#3b82f6';
-    dragImage.style.color = 'white';
-    dragImage.style.borderRadius = '4px';
-    dragImage.style.fontSize = '12px';
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    document.body.appendChild(dragImage);
-    
-    event.dataTransfer.setDragImage(dragImage, 0, 0);
-    
-    // Remover o elemento após um curto período
-    setTimeout(() => {
-      document.body.removeChild(dragImage);
-    }, 100);
-  } catch (error) {
-    console.error('Erro ao definir dados do dataTransfer:', error);
-  }
-}
-
-const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
-  console.log('Movendo componente aninhado:', childComponent.id, 'para posição:', newPosition);
-  
-  try {
-    // Criar uma cópia profunda do componente pai para evitar mutações diretas
-    const updatedParent = JSON.parse(JSON.stringify(parentComponent));
-    
-    // Encontrar o componente filho
-    const childIndex = updatedParent.children.findIndex(c => c.id === childComponent.id);
-    if (childIndex !== -1) {
-      // Atualizar a posição do componente filho
-      updatedParent.children[childIndex].position = {
-        ...updatedParent.children[childIndex].position,
-        x: newPosition.x,
-        y: newPosition.y
-      };
-      
-      // Atualizar o componente pai no array principal
-      const parentIndex = pageComponents.value.findIndex(c => c.id === updatedParent.id);
-      if (parentIndex !== -1) {
-        // Criar uma cópia profunda dos componentes para evitar mutações diretas
-        const updatedComponents = JSON.parse(JSON.stringify(pageComponents.value));
-        
-        // Atualizar o componente pai com as alterações
-        updatedComponents[parentIndex] = updatedParent;
-        
-        // Atualizar o estado
-        pageComponents.value = updatedComponents;
-        
-        // Forçar a atualização do v-model
-        nextTick(() => {
-          emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
-        });
-        
-        console.log('Componente aninhado movido com sucesso:', childComponent.id);
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao mover componente aninhado:', error);
-  }
-}
 </script>
 
 <style scoped>
@@ -2258,35 +1905,16 @@ const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
 
 /* Estilos para aninhamento flexível */
 .nest-highlight {
-  @apply ring-2 ring-blue-500 ring-opacity-70 transition-all duration-200;
+  @apply ring-2 ring-primary-500 ring-opacity-70 transition-all duration-200;
 }
 
 .nest-dropzone-active {
-  @apply bg-blue-50 dark:bg-blue-900/20 transition-colors duration-200;
-}
-
-/* Destaque para a área de aninhamento durante o drag */
-[id^="nest-container-"].drag-over {
-  @apply border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/20;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
+  @apply bg-primary-50 dark:bg-primary-900/20 transition-colors duration-200;
 }
 
 /* Alças de redimensionamento */
 .resize-handle {
-  @apply absolute w-3 h-3 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50;
+  @apply absolute w-3 h-3 bg-primary-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50;
 }
 
 .resize-handle-se {
@@ -2323,11 +1951,11 @@ const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
 
 /* Estilo para componentes aninhados */
 .nested-component {
-  @apply relative border border-dashed border-blue-300 dark:border-blue-700 rounded-lg transition-all duration-200;
+  @apply relative border border-dashed border-primary-300 dark:border-primary-700 rounded-lg transition-all duration-200;
 }
 
 .nested-component:hover {
-  @apply border-blue-500 dark:border-blue-500;
+  @apply border-primary-500 dark:border-primary-500;
 }
 
 /* Indicador de hierarquia */
@@ -2335,48 +1963,10 @@ const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
   @apply absolute top-0 left-0 w-full h-full pointer-events-none;
   background: repeating-linear-gradient(
     45deg,
-    rgba(59, 130, 246, 0.05),
-    rgba(59, 130, 246, 0.05) 10px,
+    rgba(var(--color-primary-500), 0.05),
+    rgba(var(--color-primary-500), 0.05) 10px,
     transparent 10px,
     transparent 20px
   );
-}
-
-/* Área de aninhamento */
-.nest-container {
-  min-height: 200px;
-  position: relative;
-  border: 2px dashed #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  transition: all 0.3s ease;
-}
-
-.dark .nest-container {
-  border-color: #4b5563;
-}
-
-.nest-container.drag-over {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
-}
-
-.dark .nest-container.drag-over {
-  background-color: rgba(59, 130, 246, 0.2);
-  border-color: #60a5fa;
-}
-
-/* Estilos para componentes aninhados */
-.nested-component {
-  cursor: move;
-  min-width: 100px;
-  min-height: 50px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-.nested-component:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
 }
 </style>

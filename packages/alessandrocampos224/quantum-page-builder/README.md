@@ -1,84 +1,65 @@
-# Criação de paginas dinamicas usando laravel,inertiajs com stack vuejs
+# Quantum Page Builder
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/alessandrocampos224/quantum-page-builder.svg?style=flat-square)](https://packagist.org/packages/alessandrocampos224/quantum-page-builder)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/alessandrocampos224/quantum-page-builder/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/alessandrocampos224/quantum-page-builder/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/alessandrocampos224/quantum-page-builder/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/alessandrocampos224/quantum-page-builder/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/alessandrocampos224/quantum-page-builder.svg?style=flat-square)](https://packagist.org/packages/alessandrocampos224/quantum-page-builder)
+Um construtor de páginas flexível e poderoso para Laravel, com suporte a aninhamento automático de componentes.
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+## Recursos
 
-## Support us
+- Arrastar e soltar componentes para construir páginas
+- Aninhamento automático de componentes (todos os componentes aceitam aninhamento)
+- Posicionamento livre de componentes aninhados
+- Redimensionamento de componentes
+- Controle de ordem de empilhamento (z-index)
+- Configurações avançadas para cada componente
+- Suporte a temas claro e escuro
+- Integração com Laravel e Inertia.js
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/quantum-page-builder.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/quantum-page-builder)
+## Aninhamento Flexível de Componentes
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
+O Quantum Page Builder permite criar layouts complexos através do aninhamento flexível de componentes. Todos os componentes aceitam aninhamento por padrão, o que significa que você pode posicionar livremente componentes dentro de outros componentes, criando layouts personalizados e avançados.
 
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+### Como usar o aninhamento flexível
 
-## Installation
+1. **Adicionar componentes aninhados**:
+   - Arraste um componente da barra lateral para dentro da área "Componentes Aninhados" de qualquer componente
+   - O componente será adicionado e poderá ser posicionado livremente dentro do componente pai
 
-You can install the package via composer:
+2. **Posicionar componentes aninhados**:
+   - Clique e arraste um componente aninhado para posicioná-lo livremente dentro do componente pai
+   - Use as alças de redimensionamento para ajustar o tamanho do componente
 
-```bash
-composer require alessandrocampos224/quantum-page-builder
-```
+3. **Controlar a ordem de empilhamento**:
+   - Use os botões "Trazer para frente" e "Enviar para trás" para controlar a ordem de empilhamento dos componentes aninhados
 
-You can publish and run the migrations with:
+4. **Remover aninhamento**:
+   - Use o botão "Desaninhar" para mover um componente aninhado para fora do componente pai
 
-```bash
-php artisan vendor:publish --tag="quantum-page-builder-migrations"
-php artisan migrate
-```
+### Dicas para aninhamento eficiente
 
-You can publish the config file with:
+- Combine componentes de diferentes tipos para criar layouts personalizados
+- Use o redimensionamento para ajustar o tamanho dos componentes aninhados
+- Controle a ordem de empilhamento para criar efeitos de sobreposição
+- Experimente diferentes combinações para encontrar o layout perfeito
+- Crie múltiplos níveis de aninhamento para layouts complexos
 
-```bash
-php artisan vendor:publish --tag="quantum-page-builder-config"
-```
+## Componentes disponíveis
 
-This is the contents of the published config file:
+- **Cabeçalho**: Títulos e subtítulos com opções de estilo
+- **Conteúdo**: Blocos de texto com formatação
+- **Cards**: Grids de cards com diferentes layouts
+- **Benefícios**: Destaque os benefícios do seu produto ou serviço
+- **Simulador**: Formulários interativos para simulações
+- **Canais de Atendimento**: Exiba seus canais de contato
+- **Formulário**: Crie formulários personalizados
 
-```php
-return [
-];
-```
+## Requisitos
 
-Optionally, you can publish the views using
+- PHP 8.0+
+- Laravel 9.0+
+- Node.js 14+
+- Tailwind CSS 3.0+
+- Vue.js 3.0+
+- Inertia.js
 
-```bash
-php artisan vendor:publish --tag="quantum-page-builder-views"
-```
+## Licença
 
-## Usage
-
-```php
-$pageBuilder = new Quantum\Page\Builder\PageBuilder();
-echo $pageBuilder->echoPhrase('Hello, Quantum\Page\Builder!');
-```
-
-## Testing
-
-```bash
-composer test
-```
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [Claudio Campos](https://github.com/alessandrocampos224)
-- [All Contributors](../../contributors)
-
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+Este projeto está licenciado sob a [MIT License](LICENSE).

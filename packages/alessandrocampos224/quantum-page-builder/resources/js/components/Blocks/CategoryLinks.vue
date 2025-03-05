@@ -112,13 +112,12 @@ const linkClasses = computed(() => {
     case 'minimal':
       return `${baseClasses} hover:bg-gray-50 dark:hover:bg-gray-800`
     default:
-      return `${baseClasses} border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-500`
+      return `${baseClasses} border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500`
   }
 })
 
 // Classes dos ícones
 const iconClasses = computed(() => ({
-  'text-primary-500': false,
   'text-blue-500': true
 }))
 

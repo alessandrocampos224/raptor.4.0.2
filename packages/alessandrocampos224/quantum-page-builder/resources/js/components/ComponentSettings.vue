@@ -25,26 +25,9 @@
         <div class="space-y-2">
           <h4 class="text-sm font-medium">Aninhamento de Componentes</h4>
           <div class="space-y-2">
-            <div class="flex items-center space-x-2">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="settings.allowNesting"
-                @click="toggleNesting"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
-                :class="[
-                  settings.allowNesting ? 'bg-primary-600' : 'bg-gray-200',
-                ]"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                  :class="[
-                    settings.allowNesting ? 'translate-x-6' : 'translate-x-1',
-                  ]"
-                />
-              </button>
-              <Label>Permitir componentes aninhados</Label>
-            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Este componente pode conter outros componentes que podem ser posicionados livremente dentro dele. Arraste componentes para dentro deste componente para criar layouts aninhados.
+            </p>
           </div>
         </div>
 
@@ -1246,43 +1229,37 @@ watch(settings, (newSettings) => {
   console.log('ComponentSettings - Settings atualizados:', {
     ...newSettings,
     allowNesting: newSettings.allowNesting === true,
-  })
+  });
   
   // Garantir que allowNesting seja incluído e convertido para booleano
   const updatedSettings = {
-    ...newSettings,
+    ...JSON.parse(JSON.stringify(newSettings)), // Cria uma cópia profunda para evitar mutações
     allowNesting: newSettings.allowNesting === true
-  }
+  };
   
   // Emitir o evento com o ID do componente e as configurações atualizadas
-  emit('update', props.component.id, updatedSettings)
-}, { deep: true })
+  emit('update', props.component.id, updatedSettings);
+}, { deep: true });
 
 // Watch para atualizar quando o componente mudar
 watch(() => props.component, (newComponent) => {
   if (newComponent) {
-    console.log('ComponentSettings - Novo componente recebido:', newComponent)
-    // Manter o estado atual do allowNesting ao mesclar as configurações
-    const currentAllowNesting = settings.allowNesting
+    console.log('ComponentSettings - Novo componente recebido:', newComponent);
+    
+    // Cria uma cópia profunda das configurações iniciais
+    const initialSettings = JSON.parse(JSON.stringify(initializeSettings()));
+    
+    // Cria uma cópia profunda das props do componente
+    const componentProps = newComponent.props ? JSON.parse(JSON.stringify(newComponent.props)) : {};
+    
+    // Mescla as configurações garantindo que allowNesting seja um booleano
     Object.assign(settings, {
-      ...initializeSettings(),
-      ...(newComponent.props || {}),
-      allowNesting: newComponent.props?.allowNesting === true
-    })
-    console.log('ComponentSettings - Settings após atualização com allowNesting:', settings.allowNesting)
+      ...initialSettings,
+      ...componentProps,
+      allowNesting: componentProps.allowNesting === true
+    });
+    
+    console.log('ComponentSettings - Settings após atualização com allowNesting:', settings.allowNesting);
   }
-}, { deep: true })
-
-// Função para alternar o estado de aninhamento
-const toggleNesting = () => {
-  console.log('Toggle nesting - Estado anterior:', settings.allowNesting)
-  settings.allowNesting = settings.allowNesting !== true
-  console.log('Toggle nesting - Novo estado:', settings.allowNesting)
-  
-  // Emitir atualização imediatamente após a mudança
-  emit('update', props.component.id, {
-    ...settings,
-    allowNesting: settings.allowNesting === true
-  })
-}
+}, { deep: true });
 </script>
