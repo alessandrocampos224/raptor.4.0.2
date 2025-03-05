@@ -500,6 +500,19 @@
         <template v-if="type === 'benefits'">
           <!-- Conteúdo existente do componente benefits -->
           <div class="space-y-4">
+            <!-- Título e Subtítulo -->
+            <div class="space-y-3">
+              <h4 class="text-sm font-medium">Título e Subtítulo</h4>
+              <div>
+                <Label class="mb-1">Título</Label>
+                <Input v-model="settings.title" placeholder="Digite o título" />
+              </div>
+              <div>
+                <Label class="mb-1">Subtítulo</Label>
+                <Input v-model="settings.subtitle" placeholder="Digite o subtítulo" />
+              </div>
+            </div>
+            
             <div class="flex items-center justify-between">
               <h4 class="text-sm font-medium">Benefícios</h4>
               <button type="button" @click="addBenefit" class="text-sm text-tenant-primary hover:text-tenant-primary-dark">
@@ -927,7 +940,10 @@ const initializeSettings = () => {
     return {
       ...defaultSettings,
       items: [],
-      columns: 3
+      columns: 3,
+      title: 'Seus Benefícios',
+      subtitle: '',
+      style: 'cards'
     }
   } else if (props.component?.type === 'simulator') {
     return {

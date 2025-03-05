@@ -31,21 +31,46 @@
       containerWidth === 'full' ? '' : 'container mx-auto',
       containerWidth === 'narrow' ? 'max-w-4xl' : ''
     ]">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div v-for="(benefit, index) in items || benefits" :key="index" class="flex flex-col items-center text-center">
-          <div class="w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-tenant-primary text-white">
+      <!-- Título da seção, se existir -->
+      <div v-if="title" class="mb-8 text-center">
+        <h2 class="text-3xl font-bold text-gray-900">{{ title }}</h2>
+        <p v-if="subtitle" class="mt-2 text-xl text-gray-600">{{ subtitle }}</p>
+      </div>
+      
+      <!-- Grid de benefícios -->
+      <div :class="[
+        'grid gap-8',
+        columns === 2 ? 'grid-cols-1 md:grid-cols-2' : 
+        columns === 3 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 
+        columns === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 
+        'grid-cols-1 md:grid-cols-3'
+      ]">
+        <div 
+          v-for="(benefit, index) in items || benefits" 
+          :key="index" 
+          :class="[
+            style === 'cards' ? 'bg-white p-6 rounded-lg shadow-md' : '',
+            style === 'minimal' ? 'border-t pt-4' : '',
+            'flex flex-col items-center text-center'
+          ]"
+        >
+          <div v-if="benefit.icon" class="w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-tenant-primary text-white">
             <i :class="benefit.icon" class="text-2xl"></i>
           </div>
           <h3 class="text-xl font-semibold mb-2">{{ benefit.title }}</h3>
           <p class="text-gray-600">{{ benefit.description }}</p>
-          <a v-if="benefit.link && benefit.link.url" :href="benefit.link.url" class="mt-4 text-tenant-primary hover:underline">
+          <a 
+            v-if="benefit.link && benefit.link.url" 
+            :href="benefit.link.url" 
+            class="mt-4 text-tenant-primary hover:underline"
+          >
             {{ benefit.link.text || 'Saiba mais' }}
           </a>
         </div>
       </div>
       
       <!-- Área para componentes aninhados -->
-      <div v-if="allowNesting" class="nested-components-container mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+      <div v-if="allowNesting" class="nested-components-container mt-12 border-t border-gray-200 dark:border-gray-700 pt-8 grid grid-cols-12 gap-6">
         <slot></slot>
       </div>
     </div>
@@ -157,6 +182,22 @@ const props = defineProps({
   items: {
     type: Array,
     default: () => []
+  },
+  title: {
+    type: String,
+    default: ''
+  },
+  subtitle: {
+    type: String,
+    default: ''
+  },
+  columns: {
+    type: Number,
+    default: 3
+  },
+  style: {
+    type: String,
+    default: 'cards'
   }
 })
 </script> 
