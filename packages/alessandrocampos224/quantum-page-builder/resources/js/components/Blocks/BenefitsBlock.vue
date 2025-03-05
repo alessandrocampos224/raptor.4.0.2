@@ -32,14 +32,14 @@
       containerWidth === 'narrow' ? 'max-w-4xl' : ''
     ]">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div v-for="(benefit, index) in benefits" :key="index" class="flex flex-col items-center text-center">
+        <div v-for="(benefit, index) in items || benefits" :key="index" class="flex flex-col items-center text-center">
           <div class="w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-tenant-primary text-white">
             <i :class="benefit.icon" class="text-2xl"></i>
           </div>
           <h3 class="text-xl font-semibold mb-2">{{ benefit.title }}</h3>
           <p class="text-gray-600">{{ benefit.description }}</p>
-          <a v-if="benefit.link" :href="benefit.link" class="mt-4 text-tenant-primary hover:underline">
-            Saiba mais
+          <a v-if="benefit.link && benefit.link.url" :href="benefit.link.url" class="mt-4 text-tenant-primary hover:underline">
+            {{ benefit.link.text || 'Saiba mais' }}
           </a>
         </div>
       </div>
@@ -153,6 +153,10 @@ const props = defineProps({
   postsLimit: {
     type: Number,
     default: 3
+  },
+  items: {
+    type: Array,
+    default: () => []
   }
 })
 </script> 

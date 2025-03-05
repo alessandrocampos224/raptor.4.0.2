@@ -1246,7 +1246,12 @@ watch(settings, (newSettings) => {
     };
     
     // Emitir o evento com o ID do componente e as configurações atualizadas
-    emit('update', props.component.id, updatedSettings);
+    // Verificar se o componente tem um parentId (é um componente aninhado)
+    if (props.component.parentId) {
+      emit('update', props.component.id, updatedSettings, props.component.parentId);
+    } else {
+      emit('update', props.component.id, updatedSettings);
+    }
   }, 300); // 300ms de debounce
 }, { deep: true });
 

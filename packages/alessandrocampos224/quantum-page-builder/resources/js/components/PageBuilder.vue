@@ -1299,9 +1299,15 @@ const nestedDropOptions = computed(() => ({
 }))
 
 const editNestedComponent = (parent, child) => {
-  selectedComponent.value = child
-  parentComponent.value = parent
-  drawerOpen.value = true
+  // Cria uma cópia do componente filho para evitar mutações diretas
+  const childCopy = JSON.parse(JSON.stringify(child));
+  
+  // Garante que o componente filho tenha a propriedade parentId
+  childCopy.parentId = parent.id;
+  
+  selectedComponent.value = childCopy;
+  parentComponent.value = parent;
+  drawerOpen.value = true;
 }
 
 const removeNestedComponent = (parent, child) => {
@@ -1388,6 +1394,9 @@ const handleNestedDragAdd = (parentComponent, event) => {
     // Garantir que o componente aninhado tenha as propriedades necessárias
     if (updatedParent.children[event.newIndex]) {
       const addedComponent = updatedParent.children[event.newIndex];
+      
+      // Adiciona o ID do componente pai ao componente aninhado
+      addedComponent.parentId = updatedParent.id;
       
       // Inicializa props se não existir
       if (!addedComponent.props) {
