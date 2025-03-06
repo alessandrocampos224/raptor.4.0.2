@@ -210,7 +210,7 @@
                 <div class="p-8">
                   <component
                     :is="getComponentByType(element.type)"
-                    v-bind="element.props || getDefaultProps(element.type)"
+                    v-bind="{ ...element.props || getDefaultProps(element.type), globalTheme: globalStyles.theme }"
                     @update:selectedPosts="(posts) => updateComponentPosts(element, posts)"
                     class="w-full"
                   />
@@ -307,7 +307,7 @@
                       <div class="p-4 pt-8">
                         <component
                           :is="getComponentByType(childElement.type)"
-                          v-bind="childElement.props || getDefaultProps(childElement.type)"
+                          v-bind="{ ...childElement.props || getDefaultProps(childElement.type), globalTheme: globalStyles.theme }"
                           class="w-full"
                         />
                       </div>
@@ -361,6 +361,8 @@
         </div>
       </div>
     </div>
+
+    
   </div>
 </template>
 
@@ -2248,11 +2250,149 @@ const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
     }
   } catch (error) {
     console.error('Erro ao mover componente aninhado:', error);
-  }
+  }        
 }
 </script>
 
-<style scoped>
+<style>
+/* Importação do CSS do Quantum Page Builder */
+@import url('/packages/alessandrocampos224/quantum-page-builder/resources/css/quantum-page-builder.css');
+
+/* Estilos de fallback caso o arquivo acima não seja encontrado */
+/* Quantum Page Builder CSS */
+
+/* Estilos gerais do construtor de páginas */
+.quantum-page-builder {
+  position: relative;
+  width: 100%;
+}
+
+/* Estilos para os componentes arrastáveis */
+.quantum-component {
+  position: relative;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.quantum-component:hover {
+  border-color: #4f46e5;
+}
+
+.quantum-component.selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+}
+
+/* Estilos para as alças de redimensionamento */
+.resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #4f46e5;
+  border-radius: 50%;
+  z-index: 100;
+}
+
+.resize-handle-n {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-handle-e {
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-handle-s {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.resize-handle-w {
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.resize-handle-ne {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+
+.resize-handle-nw {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+
+.resize-handle-se {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
+
+.resize-handle-sw {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+
+/* Estilos para a barra de ferramentas do componente */
+.component-toolbar {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  display: flex;
+  gap: 5px;
+  background-color: #4f46e5;
+  border-radius: 4px;
+  padding: 3px;
+  z-index: 100;
+}
+
+.component-toolbar button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+.component-toolbar button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos para o modo de visualização */
+.preview-mode .component-toolbar,
+.preview-mode .resize-handle {
+  display: none;
+}
+
+/* Estilos para arrastar e soltar */
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
+
+.sortable-drag {
+  opacity: 0;
+}
+
+.sortable-chosen {
+  background-color: #f3f4f6;
+}
+
+/* Estilos específicos do PageBuilder */
 .page-builder {
   @apply min-h-screen bg-white dark:bg-gray-800 w-full;
 }
@@ -2397,5 +2537,91 @@ const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
 
 .dark .nested-components-container {
   @apply border-gray-700;
+}
+
+/* Estilos do tema escuro */
+/* Tema escuro */
+.dark-theme {
+  background-color: #1a202c;
+  color: #f7fafc;
+}
+
+.dark-theme h1, 
+.dark-theme h2, 
+.dark-theme h3, 
+.dark-theme h4, 
+.dark-theme h5, 
+.dark-theme h6 {
+  color: #f7fafc;
+}
+
+.dark-theme p {
+  color: #e2e8f0;
+}
+
+.dark-theme a {
+  color: #90cdf4;
+}
+
+.dark-theme a:hover {
+  color: #63b3ed;
+}
+
+/* Estilos específicos para componentes no tema escuro */
+.dark-theme .header-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .content-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .card-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .benefits-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .simulator-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .form-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .contact-channels-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+/* Espaçamento entre componentes */
+.gap-y-12 {
+  margin-bottom: 3rem;
+}
+
+.gap-y-20 {
+  margin-bottom: 5rem;
+}
+
+.gap-y-28 {
+  margin-bottom: 7rem;
+}
+
+/* Largura do conteúdo */
+.max-w-7xl {
+  max-width: 80rem;
+}
+
+.max-w-4xl {
+  max-width: 56rem;
 }
 </style>

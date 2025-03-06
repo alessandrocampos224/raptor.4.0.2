@@ -15,6 +15,7 @@
       overlayOpacity ? 'relative' : '',
       textAlignment === 'center' ? 'text-center' : '',
       textAlignment === 'right' ? 'text-right' : '',
+      globalTheme === 'dark' ? 'dark-theme text-white' : ''
     ]"
     :style="{
       backgroundImage: backgroundImage ? `url(${backgroundImage})` : null,
@@ -252,6 +253,11 @@ const props = defineProps({
     type: String,
     default: 'normal' // 'compact', 'normal', 'relaxed'
   },
+  // Estilo do componente
+  style: {
+    type: [String, Object],
+    default: 'default'
+  },
   // Novas propriedades para o sistema de colunas e aninhamento
   columnSpan: {
     type: [Number, String],
@@ -277,7 +283,11 @@ const props = defineProps({
   postsLimit: {
     type: [Number, String],
     default: 6
-  }
+  },
+  globalTheme: {
+    type: String,
+    default: 'light'
+  },
 })
 
 // Estado para armazenar posts carregados dinamicamente

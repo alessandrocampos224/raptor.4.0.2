@@ -14,6 +14,7 @@
       overlayOpacity ? 'relative' : '',
       textAlignment === 'center' ? 'text-center' : '',
       textAlignment === 'right' ? 'text-right' : '',
+      globalTheme === 'dark' ? 'dark-theme text-white' : ''
     ]"
     :style="{
       backgroundImage: backgroundImage ? `url(${backgroundImage})` : null,
@@ -183,7 +184,7 @@ const props = defineProps({
   },
   // Novas propriedades para suporte a colunas e aninhamento
   columnSpan: {
-    type: Number,
+    type: [Number, String],
     default: 12
   },
   allowNesting: {
@@ -205,7 +206,11 @@ const props = defineProps({
   postsLimit: {
     type: Number,
     default: 3
-  }
+  },
+  globalTheme: {
+    type: String,
+    default: 'light'
+  },
 })
 
 // Debug do valor do estilo

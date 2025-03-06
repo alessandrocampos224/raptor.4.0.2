@@ -149,7 +149,7 @@ const props = defineProps({
   },
   // Novas propriedades para suporte a colunas e aninhamento
   columnSpan: {
-    type: Number,
+    type: [Number, String],
     default: 12
   },
   allowNesting: {

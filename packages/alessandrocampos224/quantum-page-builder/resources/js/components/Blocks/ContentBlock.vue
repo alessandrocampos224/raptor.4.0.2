@@ -15,6 +15,7 @@
       props.overlayOpacity ? 'relative' : '',
       props.textAlignment === 'center' ? 'text-center' : '',
       props.textAlignment === 'right' ? 'text-right' : '',
+      props.globalTheme === 'dark' ? 'dark-theme text-white' : ''
     ]"
     :style="{
       backgroundImage: props.backgroundImage ? `url(${props.backgroundImage})` : null,
@@ -107,7 +108,7 @@
     </div>
 
     <!-- Área para componentes aninhados -->
-    <div v-if="props.allowNesting" class="nested-components-container">
+    <div v-if="allowNesting" class="nested-components-container">
       <slot></slot>
     </div>
   </div>
@@ -146,7 +147,11 @@ const props = defineProps({
   layout: { type: String, default: 'grid' },
   columns: { type: Number, default: 3 },
   style: { type: [String, Object], default: 'default' },
-  theme: { type: String, default: 'light' }
+  theme: { type: String, default: 'light' },
+  globalTheme: {
+    type: String,
+    default: 'light'
+  }
 })
 
 // Estado

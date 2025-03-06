@@ -14,6 +14,7 @@
       overlayOpacity ? 'relative' : '',
       textAlignment === 'center' ? 'text-center' : '',
       textAlignment === 'right' ? 'text-right' : '',
+      globalTheme === 'dark' ? 'dark-theme text-white' : ''
     ]"
     :style="{
       backgroundImage: backgroundImage ? `url(${backgroundImage})` : null,
@@ -156,7 +157,7 @@ const props = defineProps({
   },
   // Novas propriedades para suporte a colunas e aninhamento
   columnSpan: {
-    type: Number,
+    type: [Number, String],
     default: 12
   },
   allowNesting: {
@@ -196,8 +197,12 @@ const props = defineProps({
     default: 3
   },
   style: {
-    type: String,
+    type: [String, Object],
     default: 'cards'
+  },
+  globalTheme: {
+    type: String,
+    default: 'light'
   }
 })
 </script> 

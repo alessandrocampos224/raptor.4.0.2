@@ -15,7 +15,8 @@
       overlayOpacity ? 'relative' : '',
       textAlignment === 'center' ? 'text-center' : '',
       textAlignment === 'right' ? 'text-right' : '',
-      containerWidth === 'full' ? 'w-full' : 'container mx-auto'
+      containerWidth === 'full' ? 'w-full' : 'container mx-auto',
+      globalTheme === 'dark' ? 'dark-theme text-white' : ''
     ]"
     :style="{
       backgroundImage: backgroundImage ? `url(${backgroundImage})` : null,
@@ -189,7 +190,7 @@
     </div>
 
     <!-- Área para componentes aninhados -->
-    <div v-if="allowNesting === true" class="nested-components-container">
+    <div v-if="allowNesting" class="nested-components-container">
       <slot></slot>
     </div>
   </header>
@@ -334,6 +335,10 @@ const props = defineProps({
   layout: {
     type: String,
     default: 'grid'
+  },
+  globalTheme: {
+    type: String,
+    default: 'light'
   }
 })
 

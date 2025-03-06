@@ -14,6 +14,7 @@
       overlayOpacity ? 'relative' : '',
       textAlignment === 'center' ? 'text-center' : '',
       textAlignment === 'right' ? 'text-right' : '',
+      globalTheme === 'dark' ? 'dark-theme text-white' : ''
     ]"
     :style="{
       backgroundImage: backgroundImage ? `url(${backgroundImage})` : null,
@@ -217,12 +218,16 @@ defineProps({
   },
   // Novas propriedades para suporte a colunas e aninhamento
   columnSpan: {
-    type: Number,
+    type: [Number, String],
     default: 12
   },
   allowNesting: {
     type: Boolean,
     default: false
+  },
+  style: {
+    type: [String, Object],
+    default: 'default'
   },
   contentType: {
     type: String,
@@ -239,7 +244,11 @@ defineProps({
   postsLimit: {
     type: Number,
     default: 3
-  }
+  },
+  globalTheme: {
+    type: String,
+    default: 'light'
+  },
 })
 
 const formData = ref({})

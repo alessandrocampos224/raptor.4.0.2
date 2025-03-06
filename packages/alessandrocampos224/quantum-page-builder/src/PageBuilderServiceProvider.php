@@ -22,4 +22,11 @@ class PageBuilderServiceProvider extends PackageServiceProvider
             ->hasMigration('create_quantum_page_builder_table')
             ->hasCommand(PageBuilderCommand::class);
     }
+
+    public function packageBooted()
+    {
+        $this->publishes([
+            __DIR__.'/../resources/css' => public_path('vendor/quantum-page-builder/css'),
+        ], 'quantum-page-builder-assets');
+    }
 }

@@ -5,7 +5,13 @@
       <p>Se esta mensagem persistir, pode haver um problema com os dados da página.</p>
     </div>
     <!-- Renderização dos componentes da página -->
-    <div v-else class="grid grid-cols-12 gap-4">
+    <div v-else :class="[
+      'grid grid-cols-12 gap-4',
+      pageGlobalStyles.theme === 'dark' ? 'dark-theme' : '',
+      `gap-y-${pageGlobalStyles.spacing === 'compact' ? '12' : pageGlobalStyles.spacing === 'normal' ? '20' : '28'}`,
+      pageGlobalStyles.contentWidth === 'contained' ? 'max-w-7xl mx-auto' : 
+      pageGlobalStyles.contentWidth === 'narrow' ? 'max-w-4xl mx-auto' : 'w-full'
+    ]">
       <template v-for="(component, index) in pageComponents" :key="index">
         <div :class="[
           `col-span-${component.props?.columnSpan || 12}`,
@@ -13,7 +19,7 @@
         ]">
           <component
             :is="getComponentByType(component.type)"
-            v-bind="component.props || {}"
+            v-bind="{ ...component.props || {}, globalTheme: pageGlobalStyles.theme }"
             class="w-full"
           >
             <!-- Renderização de componentes aninhados -->
@@ -23,7 +29,7 @@
                   <div :class="`col-span-${childComponent.props?.columnSpan || 12}`">
                     <component
                       :is="getComponentByType(childComponent.type)"
-                      v-bind="childComponent.props || {}"
+                      v-bind="{ ...childComponent.props || {}, globalTheme: pageGlobalStyles.theme }"
                       class="w-full mb-4"
                     />
                   </div>
@@ -168,13 +174,94 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.internal-page {
-  @apply min-h-screen bg-white dark:bg-gray-900;
+<style>
+/* Tema escuro */
+.dark-theme {
+  background-color: #1a202c;
+  color: #f7fafc;
 }
 
-:deep(.nested-components-container) {
-  @apply grid grid-cols-12 gap-8 mt-16 pt-12 border-t-2 border-gray-200 dark:border-gray-700;
+.dark-theme h1, 
+.dark-theme h2, 
+.dark-theme h3, 
+.dark-theme h4, 
+.dark-theme h5, 
+.dark-theme h6 {
+  color: #f7fafc;
+}
+
+.dark-theme p {
+  color: #e2e8f0;
+}
+
+.dark-theme a {
+  color: #90cdf4;
+}
+
+.dark-theme a:hover {
+  color: #63b3ed;
+}
+
+/* Estilos específicos para componentes no tema escuro */
+.dark-theme .header-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .content-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .card-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .benefits-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .simulator-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .form-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-theme .contact-channels-block {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+/* Espaçamento entre componentes */
+.gap-y-12 {
+  margin-bottom: 3rem;
+}
+
+.gap-y-20 {
+  margin-bottom: 5rem;
+}
+
+.gap-y-28 {
+  margin-bottom: 7rem;
+}
+
+/* Largura do conteúdo */
+.max-w-7xl {
+  max-width: 80rem;
+}
+
+.max-w-4xl {
+  max-width: 56rem;
+}
+
+.internal-page {
+  @apply min-h-screen;
 }
 
 :deep(.nested-components) {
