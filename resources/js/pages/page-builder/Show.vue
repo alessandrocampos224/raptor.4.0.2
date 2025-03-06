@@ -21,7 +21,12 @@ const props = defineProps<{
     actions: any[];
 }>();
 
-console.log('Seções da página:', props.sections);
+// Log para depuração
+console.log('Show - Props recebidas:', {
+    sections: props.sections,
+    record: props.record,
+    config: props.config
+});
 </script>
 
 <template>

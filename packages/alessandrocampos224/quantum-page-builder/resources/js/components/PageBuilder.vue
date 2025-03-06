@@ -484,6 +484,13 @@ const dragStartPosY = ref(0)
 // Adicionar uma flag para controlar se o drop já foi processado
 const dropProcessed = ref(false);
 
+// Log para depuração
+console.log('PageBuilder - Inicializando componentes:', {
+    modelValue: props.modelValue,
+    sections: props.sections,
+    pageComponents: pageComponents.value
+})
+
 // Função para comparar objetos profundamente
 const isEqual = (obj1, obj2) => {
     return JSON.stringify(obj1) === JSON.stringify(obj2)
@@ -491,20 +498,28 @@ const isEqual = (obj1, obj2) => {
 
 // Observa mudanças nos componentes
 watch(pageComponents, (newValue) => {
-    console.log('PageBuilder - Componentes alterados:', newValue);
+    console.log('PageBuilder - Componentes alterados:', newValue)
     
     // Garante que allowNesting seja sempre um booleano em todos os componentes
-    const updatedComponents = newValue.map(component => ensureAllowNestingIsBoolean(component));
+    const updatedComponents = newValue.map(component => ensureAllowNestingIsBoolean(component))
     
     // Atualiza os componentes apenas se houver mudanças
     if (JSON.stringify(updatedComponents) !== JSON.stringify(newValue)) {
-        pageComponents.value = updatedComponents;
+        pageComponents.value = updatedComponents
     }
     
     if (!isEqual(newValue, props.modelValue)) {
-        emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)));
+        emit('update:modelValue', JSON.parse(JSON.stringify(updatedComponents)))
     }
 }, { deep: true })
+
+// Observa mudanças nas props
+watch(() => props.sections, (newValue) => {
+    console.log('PageBuilder - Props sections alterado:', newValue)
+    if (newValue?.length && !isEqual(newValue, pageComponents.value)) {
+        pageComponents.value = JSON.parse(JSON.stringify(newValue))
+    }
+}, { immediate: true, deep: true })
 
 // Observa mudanças nos estilos globais
 watch(globalStyles, (newValue) => {
@@ -517,11 +532,11 @@ watch(globalStyles, (newValue) => {
 
 // Observa mudanças nas props
 watch(() => props.modelValue, (newValue) => {
-    console.log('PageBuilder - Props modelValue alterado:', newValue);
-    if (!isEqual(newValue, pageComponents.value)) {
-        pageComponents.value = JSON.parse(JSON.stringify(newValue || []));
+    console.log('PageBuilder - Props modelValue alterado:', newValue)
+    if (newValue?.length && !isEqual(newValue, pageComponents.value)) {
+        pageComponents.value = JSON.parse(JSON.stringify(newValue))
     }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 watch(() => props.globalStylesValue, (newValue) => {
     console.log('PageBuilder - Props globalStylesValue alterado:', newValue);

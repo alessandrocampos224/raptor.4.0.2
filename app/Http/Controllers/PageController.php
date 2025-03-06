@@ -287,13 +287,28 @@ class PageController extends AbstractController
     {
         $model = $this->getModel()::findOrFail($id);
         
+        // Log para depuração
+        \Log::info('Dados da página:', [
+            'id' => $id,
+            'config' => $model->config,
+            'components' => $model->config['components'] ?? []
+        ]);
+        
+        // Componentes da página
+        $components = $model->config['components'] ?? [];
+        
+        // Log dos componentes que serão passados para o PageBuilder
+        \Log::info('Componentes que serão passados para o PageBuilder:', [
+            'components' => $components
+        ]);
+        
         return Inertia::render($this->getViewShow(), [
             'breadcrumbs' => [
                 ['title' => 'Dashboard', 'href' => route('dashboard.index')],
                 ['title' => $this->getModelLabelPlural(), 'href' => route($this->routePrefix('index'))],
                 ['title' => $model->name, 'href' => ''],
             ],
-            'sections' => [],
+            'sections' => $components,
             'record' => $model,
             'config' => [
                 'action' => route($this->routePrefix('update'), $model),
@@ -328,6 +343,12 @@ class PageController extends AbstractController
             
             $model = $this->getModel()::findOrFail($id);
             
+            // Log do estado atual do modelo
+            \Log::info('Estado atual do modelo antes da atualização:', [
+                'id' => $model->id,
+                'config' => $model->config
+            ]);
+            
             // Validar os dados
             $validated = $request->validate([
                 'config' => 'required|array',
@@ -340,19 +361,27 @@ class PageController extends AbstractController
                 $validated['config']['components'] = [];
             }
             
-            // Atualizar apenas o campo config
-            if ($this->service->update($model, $validated)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Página atualizada com sucesso!',
-                    'data' => $model
-                ]);
-            }
+            // Log dos dados validados
+            \Log::info('Dados validados para salvar:', [
+                'validated' => $validated
+            ]);
+            
+            // Atualizar diretamente o campo config para garantir que os componentes sejam salvos
+            $model->config = $validated['config'];
+            $model->save();
+            
+            // Log do estado após a atualização
+            $updatedModel = $this->getModel()::findOrFail($id);
+            \Log::info('Estado do modelo após a atualização direta:', [
+                'id' => $updatedModel->id,
+                'config' => $updatedModel->config
+            ]);
             
             return response()->json([
-                'success' => false,
-                'message' => $this->service->getError() ?: 'Erro ao atualizar a página'
-            ], 422);
+                'success' => true,
+                'message' => 'Página atualizada com sucesso!',
+                'data' => $updatedModel
+            ]);
         } catch (\Exception $e) {
             // Log para depuração
             \Log::error('Erro no saveBuilder:', [
