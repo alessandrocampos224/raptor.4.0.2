@@ -1,6 +1,33 @@
 <template>
   <div class="space-y-6">
     <!-- Configurações comuns para todos os componentes -->
+     <!-- Sistema de Colunas -->
+     <div class="space-y-4">
+          <h4 class="text-sm font-medium">Sistema de Colunas</h4>
+          <div class="space-y-3">
+            <div>
+              <Label class="mb-1">Largura em Colunas</Label>
+              <Select v-model="settings.columnSpan">
+                <SelectTrigger class="w-full">
+                  <SelectValue placeholder="Selecione o número de colunas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="n in 12" :key="n" :value="n">{{ n }} {{ n === 1 ? 'coluna' : 'colunas' }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aninhamento de Componentes -->
+        <div class="space-y-4">
+          <h4 class="text-sm font-medium">Aninhamento de Componentes</h4>
+          <div class="space-y-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Este componente pode conter outros componentes que podem ser posicionados livremente dentro dele. Arraste componentes para dentro deste componente para criar layouts aninhados.
+            </p>
+          </div>
+        </div>
     <!-- Container -->
     <div class="space-y-4">
       <h4 class="text-sm font-medium">Container</h4>
@@ -282,33 +309,7 @@
     <!-- Conteúdo específico de cada componente -->
     <template v-for="type in ['header', 'content', 'benefits', 'simulator', 'contact-channels', 'cards', 'form']" :key="type">
       <template v-if="component?.type === type">
-        <!-- Sistema de Colunas -->
-        <div class="space-y-4">
-          <h4 class="text-sm font-medium">Sistema de Colunas</h4>
-          <div class="space-y-3">
-            <div>
-              <Label class="mb-1">Largura em Colunas</Label>
-              <Select v-model="settings.columnSpan">
-                <SelectTrigger class="w-full">
-                  <SelectValue placeholder="Selecione o número de colunas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="n in 12" :key="n" :value="n">{{ n }} {{ n === 1 ? 'coluna' : 'colunas' }}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Aninhamento de Componentes -->
-        <div class="space-y-4">
-          <h4 class="text-sm font-medium">Aninhamento de Componentes</h4>
-          <div class="space-y-3">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Este componente pode conter outros componentes que podem ser posicionados livremente dentro dele. Arraste componentes para dentro deste componente para criar layouts aninhados.
-            </p>
-          </div>
-        </div>
+        
 
         <!-- Configurações específicas para benefícios -->
         <template v-if="type === 'benefits'">
