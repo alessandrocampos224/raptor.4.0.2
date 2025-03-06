@@ -132,9 +132,9 @@
             :class="[
                 'min-h-[500px] bg-white dark:bg-gray-800 p-12 rounded-lg grid grid-cols-12 gap-4',
                 {
-                    'gap-y-8': globalStyles.spacing === 'compact',
-                    'gap-y-16': globalStyles.spacing === 'normal',
-                    'gap-y-24': globalStyles.spacing === 'relaxed'
+                    'gap-y-12': globalStyles.spacing === 'compact',
+                    'gap-y-20': globalStyles.spacing === 'normal',
+                    'gap-y-28': globalStyles.spacing === 'relaxed'
                 }
             ]"
           >
@@ -2373,5 +2373,14 @@ const moveNestedComponent = (parentComponent, childComponent, newPosition) => {
 .nested-component:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
+}
+
+/* Estilos para o container de componentes aninhados */
+.nested-components-container {
+  @apply mt-16 pt-12 border-t-2 border-gray-200 dark:border-gray-700 grid grid-cols-12 gap-8;
+}
+
+.dark .nested-components-container {
+  @apply border-gray-700;
 }
 </style>

@@ -18,7 +18,7 @@
           >
             <!-- Renderização de componentes aninhados -->
             <template v-if="component.children && component.children.length > 0">
-              <div class="nested-components mt-4 grid grid-cols-12 gap-4">
+              <div class="nested-components">
                 <template v-for="(childComponent, childIndex) in component.children" :key="`${index}-${childIndex}`">
                   <div :class="`col-span-${childComponent.props?.columnSpan || 12}`">
                     <component
