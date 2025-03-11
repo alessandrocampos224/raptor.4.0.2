@@ -401,6 +401,50 @@
       @confirm="confirmColumnSize"
     />
     
+    <!-- Modal de seleção de componente -->
+    <div v-if="isComponentSelectorModalOpen" class="fixed inset-0 z-[50] overflow-hidden">
+      <!-- Overlay para fechar o painel ao clicar fora -->
+      <div class="absolute inset-0 bg-black/50" @click="closeComponentSelectorModal"></div>
+      
+      <!-- Painel de seleção -->
+      <div class="fixed top-0 right-0 bottom-0 w-[450px] max-w-full bg-white dark:bg-gray-800 shadow-xl flex flex-col h-screen z-[51]">
+        <!-- Cabeçalho do painel -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-gray-800">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Selecionar Componente</h3>
+          <button 
+            type="button" 
+            @click="closeComponentSelectorModal" 
+            class="rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+          >
+            <X class="h-5 w-5" />
+            <span class="sr-only">Fechar</span>
+          </button>
+        </div>
+        
+        <!-- Conteúdo do painel -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <div class="space-y-4">
+            <!-- Lista de componentes -->
+            <div class="grid grid-cols-1 gap-4">
+              <button
+                v-for="component in availableComponents"
+                :key="component.type"
+                @click="selectComponentType(component.type)"
+                class="flex items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <component :is="component.icon" class="w-6 h-6 mr-3 text-blue-500" />
+                <div class="text-left">
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ component.title }}</h4>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ getComponentDescription(component.type) }}
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -539,6 +583,9 @@ const dragStartPosY = ref(0)
 
 // Adicionar uma flag para controlar se o drop já foi processado
 const dropProcessed = ref(false);
+
+// Estado para o modal de seleção de componente
+const isComponentSelectorModalOpen = ref(false)
 
 // Log para depuração
 console.log('PageBuilder - Inicializando componentes:', {
@@ -2518,23 +2565,37 @@ const addComponentToSection = (section) => {
     isAddingSectionMode.value = true
     pendingSection.value = section
     
-    // Aqui você pode implementar um modal para selecionar o tipo de componente
-    // Por enquanto, vamos adicionar um componente de cabeçalho como exemplo
-    const componentType = 'header'
-    const componentTemplate = availableComponents.value.find(c => c.type === componentType)
-    
-    if (componentTemplate) {
-      const newComponent = cloneComponent(componentTemplate)
-      
-      // Abrir modal para definir o tamanho do componente
-      pendingComponent.value = newComponent
-      columnSizeModalInitialSize.value = 6
-      isColumnSizeModalOpen.value = true
-    } else {
-      console.error('Tipo de componente não encontrado:', componentType)
-    }
+    // Abrir modal de seleção de componente
+    isComponentSelectorModalOpen.value = true
   } catch (error) {
     console.error('Erro ao adicionar componente à seção:', error)
+  }
+}
+
+const selectComponentType = (componentType) => {
+  console.log('Tipo de componente selecionado:', componentType)
+  
+  // Fechar o modal de seleção
+  isComponentSelectorModalOpen.value = false
+  
+  // Verificar se temos uma seção pendente
+  if (!pendingSection.value) {
+    console.error('Nenhuma seção pendente para adicionar o componente')
+    return
+  }
+  
+  // Encontrar o template do componente
+  const componentTemplate = availableComponents.value.find(c => c.type === componentType)
+  
+  if (componentTemplate) {
+    const newComponent = cloneComponent(componentTemplate)
+    
+    // Abrir modal para definir o tamanho do componente
+    pendingComponent.value = newComponent
+    columnSizeModalInitialSize.value = 6
+    isColumnSizeModalOpen.value = true
+  } else {
+    console.error('Tipo de componente não encontrado:', componentType)
   }
 }
 
@@ -2713,6 +2774,34 @@ const getComponentTitleByType = (type) => {
     case 'cards': return 'Cards'
     case 'form': return 'Formulário'
     default: return type
+  }
+}
+
+// Função para fechar o modal de seleção de componente
+const closeComponentSelectorModal = () => {
+  isComponentSelectorModalOpen.value = false
+  pendingSection.value = null
+}
+
+// Função para obter a descrição de um componente pelo tipo
+const getComponentDescription = (type) => {
+  switch (type) {
+    case 'header':
+      return 'Cabeçalho com título, subtítulo e botões de ação'
+    case 'content':
+      return 'Bloco de conteúdo com texto formatado'
+    case 'benefits':
+      return 'Lista de benefícios ou recursos em formato de cards'
+    case 'simulator':
+      return 'Formulário para simulação de valores'
+    case 'contact-channels':
+      return 'Canais de atendimento e contato'
+    case 'cards':
+      return 'Cards para exibir informações em formato de grade'
+    case 'form':
+      return 'Formulário personalizável para coleta de dados'
+    default:
+      return 'Componente personalizado'
   }
 }
 </script>
