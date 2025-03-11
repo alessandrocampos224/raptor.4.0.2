@@ -1308,6 +1308,12 @@ watch(settings, (newSettings) => {
       allowNesting: newSettings.allowNesting === true
     };
     
+    console.log('ComponentSettings - Emitindo atualização:', {
+      componentId: props.component.id,
+      settings: updatedSettings,
+      parentId: props.component.parentId
+    });
+    
     // Emitir o evento com o ID do componente e as configurações atualizadas
     // Verificar se o componente tem um parentId (é um componente aninhado)
     if (props.component.parentId) {
